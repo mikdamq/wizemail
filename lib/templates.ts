@@ -1,0 +1,1952 @@
+import type { SectionType, SectionContent } from './types';
+
+export type MainCategory =
+  | 'marketing' | 'ecommerce' | 'transactional' | 'saas'
+  | 'engagement' | 'event' | 'survey' | 'lead'
+  | 'corporate' | 'industry' | 'seasonal' | 'interactive';
+
+export interface SubCategoryDef {
+  id: string;
+  label: string;
+}
+
+export interface MainCategoryDef {
+  id: MainCategory;
+  label: string;
+  color: string;
+  subCategories: SubCategoryDef[];
+}
+
+export interface TemplateSectionDef {
+  type: SectionType;
+  content: SectionContent;
+}
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  description: string;
+  mainCategory: MainCategory;
+  subCategory: string;
+  accentColor: string;
+  access?: 'free' | 'premium';
+  featured?: boolean;
+  collection?: 'seasonal' | 'launch' | 'sales' | 'lifecycle';
+  sections: TemplateSectionDef[];
+}
+
+export const MAIN_CATEGORY_DEFS: MainCategoryDef[] = [
+  {
+    id: 'marketing',
+    label: 'Marketing',
+    color: '#10b981',
+    subCategories: [
+      { id: 'newsletter', label: 'Newsletter' },
+      { id: 'launch', label: 'Product Launch' },
+      { id: 'promotion', label: 'Promotion' },
+    ],
+  },
+  {
+    id: 'ecommerce',
+    label: 'E-commerce',
+    color: '#f59e0b',
+    subCategories: [
+      { id: 'abandoned-cart', label: 'Abandoned Cart' },
+      { id: 'order-confirmation', label: 'Order Confirmation' },
+      { id: 'back-in-stock', label: 'Back in Stock' },
+    ],
+  },
+  {
+    id: 'transactional',
+    label: 'Transactional',
+    color: '#6366f1',
+    subCategories: [
+      { id: 'otp', label: 'OTP / Verification' },
+      { id: 'password-reset', label: 'Password Reset' },
+      { id: 'payment-receipt', label: 'Payment Receipt' },
+    ],
+  },
+  {
+    id: 'saas',
+    label: 'SaaS',
+    color: '#0ea5e9',
+    subCategories: [
+      { id: 'welcome-onboarding', label: 'Welcome / Onboarding' },
+      { id: 'trial-ending', label: 'Trial Ending' },
+      { id: 'feature-announcement', label: 'Feature Announcement' },
+    ],
+  },
+  {
+    id: 'engagement',
+    label: 'Engagement',
+    color: '#ec4899',
+    subCategories: [
+      { id: 're-engagement', label: 'Re-engagement' },
+      { id: 'birthday', label: 'Birthday' },
+      { id: 'thank-you', label: 'Thank You' },
+    ],
+  },
+  {
+    id: 'event',
+    label: 'Event',
+    color: '#8b5cf6',
+    subCategories: [
+      { id: 'webinar-invite', label: 'Webinar Invite' },
+      { id: 'event-reminder', label: 'Event Reminder' },
+      { id: 'rsvp-confirmation', label: 'RSVP Confirmation' },
+    ],
+  },
+  {
+    id: 'survey',
+    label: 'Survey & Feedback',
+    color: '#14b8a6',
+    subCategories: [
+      { id: 'nps-survey', label: 'NPS Survey' },
+      { id: 'product-feedback', label: 'Product Feedback' },
+      { id: 'review-collection', label: 'Review Request' },
+    ],
+  },
+  {
+    id: 'lead',
+    label: 'Lead Generation',
+    color: '#f97316',
+    subCategories: [
+      { id: 'lead-magnet', label: 'Lead Magnet' },
+      { id: 'sales-followup', label: 'Sales Follow-up' },
+      { id: 'demo-request', label: 'Demo Request' },
+    ],
+  },
+  {
+    id: 'corporate',
+    label: 'Corporate',
+    color: '#64748b',
+    subCategories: [
+      { id: 'company-announcement', label: 'Company Announcement' },
+      { id: 'hr-communication', label: 'HR Communication' },
+      { id: 'partnership-outreach', label: 'Partnership Outreach' },
+    ],
+  },
+  {
+    id: 'industry',
+    label: 'Industry-Specific',
+    color: '#a855f7',
+    subCategories: [
+      { id: 'real-estate', label: 'Real Estate' },
+      { id: 'restaurant', label: 'Restaurant' },
+      { id: 'healthcare', label: 'Healthcare' },
+    ],
+  },
+  {
+    id: 'seasonal',
+    label: 'Holiday & Seasonal',
+    color: '#ef4444',
+    subCategories: [
+      { id: 'black-friday', label: 'Black Friday' },
+      { id: 'christmas', label: 'Christmas' },
+      { id: 'new-year', label: 'New Year' },
+    ],
+  },
+  {
+    id: 'interactive',
+    label: 'Interactive',
+    color: '#06b6d4',
+    subCategories: [
+      { id: 'poll-email', label: 'Poll Email' },
+      { id: 'quiz-email', label: 'Quiz Email' },
+      { id: 'interactive-survey', label: 'Interactive Survey' },
+    ],
+  },
+];
+
+export function getMainCategoryDef(id: MainCategory): MainCategoryDef | undefined {
+  return MAIN_CATEGORY_DEFS.find((c) => c.id === id);
+}
+
+export function getSubCategoryLabel(mainId: MainCategory, subId: string): string {
+  const main = getMainCategoryDef(mainId);
+  const sub = main?.subCategories.find((s) => s.id === subId);
+  return sub?.label ?? subId;
+}
+
+const STD_FOOTER = (company = 'Acme Inc.', address = '123 Main Street, San Francisco, CA 94107'): TemplateSectionDef => ({
+  type: 'footer',
+  content: { backgroundColor: '#f3f4f6', textColor: '#9ca3af', companyName: company, companyAddress: address, unsubscribeUrl: '#' },
+});
+
+const hdr = (logoText: string, bg = '#ffffff', tc = '#111111'): TemplateSectionDef => ({
+  type: 'header',
+  content: { logoText, backgroundColor: bg, textColor: tc },
+});
+
+export const TEMPLATES: EmailTemplate[] = [
+
+  // ── MARKETING ────────────────────────────────────────────────────────────────
+
+  {
+    id: 'marketing-newsletter',
+    name: 'Monthly Newsletter',
+    description: 'Curated updates, stories, and links for your subscriber base.',
+    mainCategory: 'marketing',
+    subCategory: 'newsletter',
+    accentColor: '#10b981',
+    sections: [
+      hdr('The Acme Update'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#064e3b',
+          textColor: '#ffffff',
+          headline: "What's new this month",
+          subheadline: 'Three major improvements, one big release, and a story about how we fixed our hardest bug ever.',
+          buttonText: 'Read the full update →',
+          buttonColor: '#10b981',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: '🚀 Real-time collaboration is here',
+          bodyText: "Starting today, your entire team can work in the same project simultaneously. See each other's cursors, edits, and comments as they happen — no more \"who has the file?\" confusion.\n\nThis was our most-requested feature of 2024 and we're thrilled to finally ship it.",
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f0fdf4',
+          textColor: '#064e3b',
+          headline: 'Other highlights this month',
+          feature1Title: '📈 Usage insights',
+          feature1Text: 'A new dashboard shows you exactly how your team is using the product, week over week.',
+          feature2Title: '🔗 Deep links',
+          feature2Text: 'Share a direct link to any section, comment, or file version — no more context switching.',
+          feature3Title: '🛠 API v2 is stable',
+          feature3Text: "We've promoted the v2 API to stable. Full docs are live. Migrate at your own pace — v1 stays supported until March.",
+        },
+      },
+      { type: 'divider', content: { backgroundColor: '#ffffff', dividerColor: '#e5e7eb' } },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f0fdf4',
+          textColor: '#064e3b',
+          headline: 'Try the new collaboration features today',
+          buttonText: 'Open Acme →',
+          buttonColor: '#10b981',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'marketing-launch',
+    name: 'Product Launch',
+    description: 'Build anticipation and drive conversions for a new release.',
+    mainCategory: 'marketing',
+    subCategory: 'launch',
+    accentColor: '#ec4899',
+    sections: [
+      hdr('Acme', '#09090b', '#f4f4f5'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#09090b',
+          textColor: '#ffffff',
+          headline: 'Introducing Acme 3.0',
+          subheadline: 'Rebuilt from the ground up. Faster, smarter, and more powerful than ever before. Available December 1st.',
+          buttonText: 'Get early access →',
+          buttonColor: '#ec4899',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#111111',
+          headline: "What's new in 3.0",
+          feature1Title: '10× faster',
+          feature1Text: 'A complete rewrite of the rendering engine means everything feels instant.',
+          feature2Title: 'AI-powered',
+          feature2Text: 'Smart suggestions that learn from your workflow and save you hours each week.',
+          feature3Title: 'New design',
+          feature3Text: 'A completely reimagined interface that gets out of your way and lets you focus.',
+        },
+      },
+      {
+        type: 'testimonial',
+        content: {
+          backgroundColor: '#fdf2f8',
+          textColor: '#111111',
+          quoteText: '"I\'ve been in the beta for two weeks and I can\'t go back to the old version. The speed alone is worth the upgrade."',
+          authorName: 'Alex Rivera',
+          authorTitle: 'Lead Engineer at Stripe',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#ec4899',
+          textColor: '#ffffff',
+          headline: 'Join 2,000+ users already on the waitlist',
+          buttonText: 'Reserve your spot',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#ec4899',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'marketing-promotion',
+    name: 'Promotional Offer',
+    description: 'Time-limited discount or offer to drive immediate action.',
+    mainCategory: 'marketing',
+    subCategory: 'promotion',
+    accentColor: '#f97316',
+    sections: [
+      hdr('Acme Store'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#431407',
+          textColor: '#ffffff',
+          headline: '30% off everything — 48 hours only',
+          subheadline: "Our biggest sale of the year starts now. Use code ACME30 at checkout. Don't miss it.",
+          buttonText: 'Shop now — save 30%',
+          buttonColor: '#f97316',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#fff7ed',
+          textColor: '#431407',
+          headline: 'Top picks on sale',
+          feature1Title: 'Pro Plan — $69/mo',
+          feature1Text: 'Was $99. Includes unlimited projects, priority support, and advanced analytics.',
+          feature2Title: 'Team Add-on — $29/seat',
+          feature2Text: 'Was $39. Add unlimited teammates, shared workspaces, and audit logs.',
+          feature3Title: 'Annual Bundle — $490/yr',
+          feature3Text: 'Was $699. Everything in Pro + Team, billed once. Best value.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f97316',
+          textColor: '#ffffff',
+          headline: 'Sale ends in 48 hours — code ACME30',
+          buttonText: 'Claim your discount',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#f97316',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER('Acme Store', '789 Commerce Blvd, Austin, TX 78701'),
+    ],
+  },
+
+  // ── ECOMMERCE ─────────────────────────────────────────────────────────────────
+
+  {
+    id: 'ecommerce-abandoned-cart',
+    name: 'Abandoned Cart',
+    description: 'Recover lost sales by reminding customers of items left behind.',
+    mainCategory: 'ecommerce',
+    subCategory: 'abandoned-cart',
+    accentColor: '#f59e0b',
+    sections: [
+      hdr('Acme Shop'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#fffbeb',
+          textColor: '#78350f',
+          headline: 'You left something behind 🛒',
+          subheadline: "Your cart has been saved, but items are going fast. Come back and complete your order before they sell out.",
+          buttonText: 'Return to my cart',
+          buttonColor: '#f59e0b',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: 'Still in your cart',
+          bodyText: 'Premium Wireless Headphones — $199.00\nLeather Phone Case — $49.00\nCable Organizer Kit — $29.00\n\nSubtotal: $277.00\n\nFree shipping on orders over $50.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#fffbeb',
+          textColor: '#78350f',
+          headline: 'Need help deciding? We offer free returns.',
+          buttonText: 'Complete my purchase',
+          buttonColor: '#f59e0b',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER('Acme Shop', '789 Commerce Blvd, Austin, TX 78701'),
+    ],
+  },
+
+  {
+    id: 'ecommerce-order-confirmation',
+    name: 'Order Confirmation',
+    description: 'Clean transactional receipt with order details and delivery info.',
+    mainCategory: 'ecommerce',
+    subCategory: 'order-confirmation',
+    accentColor: '#10b981',
+    sections: [
+      hdr('Acme Store'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#ecfdf5',
+          textColor: '#065f46',
+          headline: '✅ Your order is confirmed',
+          subheadline: "Order #ACM-2847 has been received and is being processed. You'll get a shipping notification within 24 hours.",
+          buttonText: 'Track your order',
+          buttonColor: '#10b981',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f9fafb',
+          textColor: '#111111',
+          headline: 'Order summary',
+          feature1Title: 'Premium Headphones',
+          feature1Text: 'Color: Midnight Black · Qty: 1 · $199.00',
+          feature2Title: 'Shipping',
+          feature2Text: 'Expedited 2-day · $14.99\nEstimated delivery: Dec 18–20',
+          feature3Title: 'Total charged',
+          feature3Text: 'Subtotal $199.00 + Shipping $14.99 + Tax $17.58\n= $231.57',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#6b7280',
+          bodyText: 'Ship to: 456 Oak Avenue, Portland, OR 97201\n\nQuestions? Reply to this email or visit our Help Center. We offer free returns within 30 days.',
+        },
+      },
+      STD_FOOTER('Acme Store', '789 Commerce Blvd, Austin, TX 78701'),
+    ],
+  },
+
+  {
+    id: 'ecommerce-back-in-stock',
+    name: 'Back in Stock',
+    description: 'Alert subscribers when a sold-out item is available again.',
+    mainCategory: 'ecommerce',
+    subCategory: 'back-in-stock',
+    accentColor: '#0ea5e9',
+    sections: [
+      hdr('Acme Shop'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0c4a6e',
+          textColor: '#ffffff',
+          headline: "It's back — grab it before it sells out again",
+          subheadline: 'The Acme Pro Wireless Headphones you were watching are back in stock. We only have 24 units available.',
+          buttonText: 'Shop now',
+          buttonColor: '#0ea5e9',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f0f9ff',
+          textColor: '#0c4a6e',
+          headline: 'Only 24 units left — they went in 2 hours last time',
+          buttonText: 'Add to cart →',
+          buttonColor: '#0ea5e9',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER('Acme Shop', '789 Commerce Blvd, Austin, TX 78701'),
+    ],
+  },
+
+  // ── TRANSACTIONAL ─────────────────────────────────────────────────────────────
+
+  {
+    id: 'transactional-otp',
+    name: 'OTP / Verification Code',
+    description: 'Secure one-time password for login or email verification.',
+    mainCategory: 'transactional',
+    subCategory: 'otp',
+    accentColor: '#6366f1',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#111111',
+          headline: 'Verify your email address',
+          subheadline: 'Enter the 6-digit code below in the app to confirm your identity. This code expires in 10 minutes.',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#f5f5ff',
+          textColor: '#111111',
+          headline: '748 291',
+          bodyText: 'Your one-time verification code',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#6b7280',
+          bodyText: "If you didn't request this code, you can safely ignore this email. Your account is secure.\n\nThis code will expire in 10 minutes. Never share this code with anyone — Acme will never ask for it.",
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'transactional-password-reset',
+    name: 'Password Reset',
+    description: 'Clear, reassuring password reset with expiry warning.',
+    mainCategory: 'transactional',
+    subCategory: 'password-reset',
+    accentColor: '#ef4444',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#fef2f2',
+          textColor: '#991b1b',
+          headline: 'Reset your password',
+          subheadline: 'We received a request to reset the password for your account. Click the button below to create a new one.',
+          buttonText: 'Reset my password',
+          buttonColor: '#ef4444',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#6b7280',
+          bodyText: "This link expires in 1 hour for security reasons.\n\nIf you didn't request a password reset, please ignore this email — your password won't change. If you're concerned about your account's security, contact us immediately at security@acme.com.",
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'transactional-payment-receipt',
+    name: 'Payment Receipt',
+    description: 'Professional payment confirmation with itemised invoice.',
+    mainCategory: 'transactional',
+    subCategory: 'payment-receipt',
+    accentColor: '#6366f1',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#1e1b4b',
+          textColor: '#ffffff',
+          headline: 'Payment received — thank you',
+          subheadline: 'Invoice #INV-0094 for $299.00 has been successfully processed. Your receipt is below.',
+          buttonText: 'Download PDF receipt',
+          buttonColor: '#6366f1',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f5f5ff',
+          textColor: '#1e1b4b',
+          headline: 'Payment summary',
+          feature1Title: 'Acme Pro — Annual',
+          feature1Text: 'Plan: Pro · Billing: Annual · Period: Jan 1 – Dec 31, 2025\n$299.00',
+          feature2Title: 'Payment method',
+          feature2Text: 'Visa ending in 4242 · Charged on Jan 1, 2025\nTransaction ID: txn_3Qq9bB2eZvKYlo2',
+          feature3Title: 'Need a VAT invoice?',
+          feature3Text: 'Add your VAT number in Billing settings and we\'ll include it on future invoices automatically.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#ede9fe',
+          textColor: '#1e1b4b',
+          headline: 'Manage your billing and payment methods',
+          buttonText: 'Go to billing →',
+          buttonColor: '#6366f1',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  // ── SAAS ──────────────────────────────────────────────────────────────────────
+
+  {
+    id: 'saas-welcome-onboarding',
+    name: 'Welcome & Onboarding',
+    description: 'Onboard new users with a warm welcome and key next steps.',
+    mainCategory: 'saas',
+    subCategory: 'welcome-onboarding',
+    accentColor: '#6366f1',
+    sections: [
+      hdr('Acme App'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0f172a',
+          textColor: '#ffffff',
+          headline: 'Welcome to Acme, Sarah 👋',
+          subheadline: "Your account is ready. Here's everything you need to get started in the next 10 minutes.",
+          buttonText: 'Open your dashboard',
+          buttonColor: '#6366f1',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f9fafb',
+          textColor: '#111111',
+          headline: 'Get up and running fast',
+          feature1Title: '1. Import your data',
+          feature1Text: 'Connect your existing tools in minutes. We support Notion, Airtable, CSV, and 40+ other sources.',
+          feature2Title: '2. Invite your team',
+          feature2Text: 'Add teammates with one click. Granular permissions so everyone sees exactly what they should.',
+          feature3Title: '3. Set up automations',
+          feature3Text: 'Save hours every week with our no-code automation builder. Templates for every workflow.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#6366f1',
+          textColor: '#ffffff',
+          headline: 'Need a hand getting started?',
+          buttonText: 'Schedule a 15-min onboarding call',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#6366f1',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'saas-trial-ending',
+    name: 'Trial Ending Soon',
+    description: 'Nudge free trial users to convert before their trial expires.',
+    mainCategory: 'saas',
+    subCategory: 'trial-ending',
+    accentColor: '#f97316',
+    sections: [
+      hdr('Acme App'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#431407',
+          textColor: '#ffffff',
+          headline: 'Your trial ends in 3 days',
+          subheadline: "Don't lose your work. Upgrade now to keep everything you've built and unlock the full Acme experience.",
+          buttonText: 'Upgrade my account',
+          buttonColor: '#f97316',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#fff7ed',
+          textColor: '#431407',
+          headline: "What you'll keep when you upgrade",
+          feature1Title: '✅ All your projects',
+          feature1Text: 'Your 4 active projects, 127 tasks, and all team comments stay exactly as you left them.',
+          feature2Title: '✅ Automation runs',
+          feature2Text: 'Your automations will continue running without interruption — no re-setup needed.',
+          feature3Title: '✅ Team access',
+          feature3Text: 'Your 3 invited teammates keep their access immediately upon upgrade.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f97316',
+          textColor: '#ffffff',
+          headline: 'Start at $29/month. Cancel anytime.',
+          buttonText: 'Upgrade now →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#f97316',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'saas-feature-announcement',
+    name: 'Feature Announcement',
+    description: "Announce a new feature or changelog update to your user base.",
+    mainCategory: 'saas',
+    subCategory: 'feature-announcement',
+    accentColor: '#0ea5e9',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0c4a6e',
+          textColor: '#ffffff',
+          headline: 'New: Advanced Analytics Dashboard',
+          subheadline: "Your team now has access to a completely redesigned analytics experience. Here's what changed.",
+          buttonText: 'Explore the new dashboard',
+          buttonColor: '#0ea5e9',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: "What's changed",
+          bodyText: 'Real-time data — All metrics now update every 30 seconds. No more manual refreshes.\n\nCustom date ranges — Analyze any time period with flexible date pickers and comparison views.\n\nExport reports — Download your data as CSV or PDF with one click, directly from the dashboard.\n\nTeam sharing — Share specific report views with colleagues via a permanent, shareable link.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f0f9ff',
+          textColor: '#0c4a6e',
+          headline: 'Available on all plans, starting today',
+          buttonText: 'Check it out →',
+          buttonColor: '#0ea5e9',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  // ── ENGAGEMENT ────────────────────────────────────────────────────────────────
+
+  {
+    id: 'engagement-reengagement',
+    name: 'Re-engagement',
+    description: "Win back inactive users who haven't logged in recently.",
+    mainCategory: 'engagement',
+    subCategory: 're-engagement',
+    accentColor: '#8b5cf6',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#1e1b4b',
+          textColor: '#ffffff',
+          headline: 'We miss you, Marcus',
+          subheadline: "It's been 30 days since your last visit. A lot has changed — and we think you'll like what's new.",
+          buttonText: 'See what you missed',
+          buttonColor: '#8b5cf6',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f5f3ff',
+          textColor: '#1e1b4b',
+          headline: "Since you were last here",
+          feature1Title: '🚀 Real-time collaboration',
+          feature1Text: 'Work with your team simultaneously in the same project. See cursors and edits live.',
+          feature2Title: '🤖 AI writing assistant',
+          feature2Text: 'New AI tools that help you draft, summarize, and edit content 3× faster.',
+          feature3Title: '📊 Redesigned analytics',
+          feature3Text: 'A completely new dashboard with real-time data, custom ranges, and one-click exports.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#8b5cf6',
+          textColor: '#ffffff',
+          headline: "Come back — your projects are waiting",
+          buttonText: 'Log back in →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#8b5cf6',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'engagement-birthday',
+    name: 'Birthday Email',
+    description: 'Delight users on their birthday with a personal message or offer.',
+    mainCategory: 'engagement',
+    subCategory: 'birthday',
+    accentColor: '#ec4899',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#500724',
+          textColor: '#ffffff',
+          headline: '🎂 Happy Birthday, Jamie!',
+          subheadline: "On your special day, we wanted to say thank you for being part of the Acme family. Here's a little gift from us.",
+          buttonText: 'Claim your birthday gift',
+          buttonColor: '#ec4899',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#fdf2f8',
+          textColor: '#500724',
+          headline: '🎁 30% off your next month — code BDAY30',
+          buttonText: 'Apply discount →',
+          buttonColor: '#ec4899',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'engagement-thank-you',
+    name: 'Thank You',
+    description: 'Express genuine gratitude to loyal customers or long-term users.',
+    mainCategory: 'engagement',
+    subCategory: 'thank-you',
+    accentColor: '#10b981',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#064e3b',
+          textColor: '#ffffff',
+          headline: 'Thank you for being with us 🙏',
+          subheadline: "You've been an Acme customer for 2 years. We don't take that for granted — and we wanted to say thank you personally.",
+          buttonText: 'See your impact',
+          buttonColor: '#10b981',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: 'Your 2 years with Acme',
+          bodyText: 'You have created 147 projects, completed 2,304 tasks, and saved an estimated 89 hours of manual work.\n\nBecause of users like you, we\'ve been able to grow our team from 5 to 42 people, ship 3 major product versions, and keep Acme profitable without outside funding.\n\nThank you, genuinely.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#ecfdf5',
+          textColor: '#064e3b',
+          headline: 'A small gift — 3 months free on annual',
+          buttonText: 'Claim your reward →',
+          buttonColor: '#10b981',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  // ── EVENT ─────────────────────────────────────────────────────────────────────
+
+  {
+    id: 'event-webinar-invite',
+    name: 'Webinar Invite',
+    description: 'Drive registrations for an online webinar or live session.',
+    mainCategory: 'event',
+    subCategory: 'webinar-invite',
+    accentColor: '#8b5cf6',
+    sections: [
+      hdr('Acme Events'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#1e1b4b',
+          textColor: '#ffffff',
+          headline: "Live Webinar: The Future of SaaS in 2025",
+          subheadline: "January 24, 2025 · 2:00 PM EST · 60 minutes · Free to attend\n\nJoin 500+ founders and operators for an in-depth discussion on what's coming next.",
+          buttonText: 'Reserve my free spot',
+          buttonColor: '#8b5cf6',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f5f3ff',
+          textColor: '#1e1b4b',
+          headline: "What we'll cover",
+          feature1Title: '📈 AI-driven growth',
+          feature1Text: 'How leading SaaS companies are using AI to reduce churn and increase expansion revenue.',
+          feature2Title: '💰 Pricing strategy',
+          feature2Text: 'Real-world examples of pricing changes that increased ARR by 40%+ without losing customers.',
+          feature3Title: '🔄 Product-led growth',
+          feature3Text: 'Building a self-serve motion that converts free users to paid at scale.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#8b5cf6',
+          textColor: '#ffffff',
+          headline: 'Spots are capped at 500. Register now — it\'s free.',
+          buttonText: 'Register for free →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#8b5cf6',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER('Acme Events'),
+    ],
+  },
+
+  {
+    id: 'event-reminder',
+    name: 'Event Reminder',
+    description: 'Remind registered attendees about an upcoming event.',
+    mainCategory: 'event',
+    subCategory: 'event-reminder',
+    accentColor: '#7c3aed',
+    sections: [
+      hdr('Acme Events'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#2e1065',
+          textColor: '#ffffff',
+          headline: '⏰ Reminder: The Future of SaaS — Tomorrow',
+          subheadline: "Your webinar is in 24 hours. Here's everything you need to join, share, and get the most out of it.",
+          buttonText: 'Add to calendar',
+          buttonColor: '#7c3aed',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f5f3ff',
+          textColor: '#2e1065',
+          headline: 'Event details',
+          feature1Title: '📅 When',
+          feature1Text: 'January 24, 2025 · 2:00 PM – 3:00 PM EST\n(11:00 AM – 12:00 PM PST)',
+          feature2Title: '🔗 Join link',
+          feature2Text: 'zoom.us/j/98765432100\nMeeting ID: 987 6543 2100\nPasscode: future2025',
+          feature3Title: '📩 Share with a colleague',
+          feature3Text: 'Forward this email or use the share link below. The more the merrier.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#7c3aed',
+          textColor: '#ffffff',
+          headline: "See you tomorrow!",
+          buttonText: 'Join the webinar →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#7c3aed',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER('Acme Events'),
+    ],
+  },
+
+  {
+    id: 'event-rsvp',
+    name: 'RSVP Confirmation',
+    description: "Confirm event registration and share all the practical details.",
+    mainCategory: 'event',
+    subCategory: 'rsvp-confirmation',
+    accentColor: '#14b8a6',
+    sections: [
+      hdr('Acme Events'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#134e4a',
+          textColor: '#ffffff',
+          headline: "You're in! 🎉 See you on January 24th",
+          subheadline: "Your spot for The Future of SaaS Webinar is confirmed. We've sent a calendar invite to your inbox.",
+          buttonText: 'View event details',
+          buttonColor: '#14b8a6',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f0fdfa',
+          textColor: '#134e4a',
+          headline: 'Everything you need',
+          feature1Title: '📅 Date & Time',
+          feature1Text: 'January 24, 2025 · 2:00 PM EST\nDuration: 60 minutes',
+          feature2Title: '🔗 Join link',
+          feature2Text: 'zoom.us/j/98765432100\nYour confirmation code: ACME-7749',
+          feature3Title: '📦 What to prepare',
+          feature3Text: 'No preparation needed — but bring your questions for the live Q&A at the end.',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          bodyText: "Can't make it? No worries — all registered attendees will receive a recording within 24 hours of the event.",
+        },
+      },
+      STD_FOOTER('Acme Events'),
+    ],
+  },
+
+  // ── SURVEY & FEEDBACK ─────────────────────────────────────────────────────────
+
+  {
+    id: 'survey-nps',
+    name: 'NPS Survey',
+    description: 'Net Promoter Score email to measure overall user satisfaction.',
+    mainCategory: 'survey',
+    subCategory: 'nps-survey',
+    accentColor: '#14b8a6',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#134e4a',
+          textColor: '#ffffff',
+          headline: 'How likely are you to recommend Acme?',
+          subheadline: "We're constantly working to make Acme better. Your honest feedback — good or bad — takes 30 seconds and helps us prioritize what matters most.",
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f0fdfa',
+          textColor: '#134e4a',
+          headline: 'On a scale of 0–10, how likely are you to recommend Acme to a colleague?',
+          buttonText: 'Give my score →',
+          buttonColor: '#14b8a6',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'survey-product-feedback',
+    name: 'Product Feedback',
+    description: 'Collect structured feedback on a specific feature or release.',
+    mainCategory: 'survey',
+    subCategory: 'product-feedback',
+    accentColor: '#0ea5e9',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0c4a6e',
+          textColor: '#ffffff',
+          headline: "We'd love your feedback on the new dashboard",
+          subheadline: "You've been using the new Analytics Dashboard for 2 weeks. A 3-minute survey will help us improve it for everyone.",
+          buttonText: 'Start the survey',
+          buttonColor: '#0ea5e9',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: 'What we want to know',
+          bodyText: "We'll ask you about:\n\n• How easy it was to find the data you needed\n• Which charts and metrics you use most\n• What's missing or confusing\n• How it compares to the old dashboard\n\nYour responses are anonymous and go directly to the product team.",
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f0f9ff',
+          textColor: '#0c4a6e',
+          headline: 'Takes 3 minutes · No login required',
+          buttonText: 'Share my feedback →',
+          buttonColor: '#0ea5e9',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'survey-review-request',
+    name: 'Review Request',
+    description: 'Ask satisfied customers to leave a public review or testimonial.',
+    mainCategory: 'survey',
+    subCategory: 'review-collection',
+    accentColor: '#f59e0b',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#78350f',
+          textColor: '#ffffff',
+          headline: 'Enjoying Acme? Tell the world 🌟',
+          subheadline: "You've been with us for 6 months. If Acme has helped your team, a quick review helps other teams find us.",
+          buttonText: 'Leave a review on G2',
+          buttonColor: '#f59e0b',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#fffbeb',
+          textColor: '#78350f',
+          headline: 'Takes 2 minutes — and we really appreciate it',
+          buttonText: 'Write my review →',
+          buttonColor: '#f59e0b',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  // ── LEAD GENERATION ───────────────────────────────────────────────────────────
+
+  {
+    id: 'lead-magnet-delivery',
+    name: 'Lead Magnet Delivery',
+    description: 'Deliver a content download and introduce your product.',
+    mainCategory: 'lead',
+    subCategory: 'lead-magnet',
+    accentColor: '#f97316',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#431407',
+          textColor: '#ffffff',
+          headline: 'Your free guide is ready 📘',
+          subheadline: "Here's the 2025 SaaS Growth Playbook you requested. 47 pages of proven tactics, benchmarks, and templates.",
+          buttonText: 'Download my free guide',
+          buttonColor: '#f97316',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: "While you read, a quick introduction",
+          bodyText: "Acme helps SaaS teams manage projects, automate workflows, and track growth metrics — all in one place.\n\nMore than 12,000 teams use Acme to ship faster and retain more customers. If you're scaling a SaaS business, it might be exactly what you need.\n\nFeel free to reply to this email with any questions. I read every reply.",
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#fff7ed',
+          textColor: '#431407',
+          headline: 'Want to see Acme in action?',
+          buttonText: 'Start free trial →',
+          buttonColor: '#f97316',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'lead-sales-followup',
+    name: 'Sales Follow-up',
+    description: 'Personal follow-up after a demo, trial signup, or inquiry.',
+    mainCategory: 'lead',
+    subCategory: 'sales-followup',
+    accentColor: '#64748b',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0f172a',
+          textColor: '#ffffff',
+          headline: 'Following up on your Acme trial, Chris',
+          subheadline: "You signed up 3 days ago and I noticed you've been exploring the automations feature — one of our most powerful. Anything I can help with?",
+          buttonText: 'Book a 20-min call',
+          buttonColor: '#64748b',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: 'What teams like yours have done with automations',
+          bodyText: "• Zapier-style workflows without leaving Acme\n• Auto-assign tasks based on project tags or team member load\n• Daily digest emails sent automatically to stakeholders\n• Trigger Slack messages when tasks reach specific stages\n\nMost teams set up their first automation in under 10 minutes.",
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f8fafc',
+          textColor: '#0f172a',
+          headline: 'Common next steps',
+          feature1Title: '📞 Book a call',
+          feature1Text: "15 minutes with me — I'll walk you through the setup for your specific use case.",
+          feature2Title: '📄 Read the docs',
+          feature2Text: 'Our automation guide covers every trigger and action available, with real examples.',
+          feature3Title: '💬 Join the community',
+          feature3Text: '2,400+ members sharing workflows, templates, and tips. Free to join.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#1e293b',
+          textColor: '#ffffff',
+          headline: "Let's make sure your trial is worth your time",
+          buttonText: 'Pick a time that works →',
+          buttonColor: '#64748b',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'lead-demo-request',
+    name: 'Demo Confirmation',
+    description: "Confirm a product demo and help prospects prepare.",
+    mainCategory: 'lead',
+    subCategory: 'demo-request',
+    accentColor: '#0ea5e9',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0c4a6e',
+          textColor: '#ffffff',
+          headline: "Your Acme demo is confirmed ✅",
+          subheadline: 'Tuesday, January 28 · 3:00 PM EST · 30 minutes\nYou\'ll meet with Jordan from our solutions team.',
+          buttonText: 'Add to calendar',
+          buttonColor: '#0ea5e9',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f0f9ff',
+          textColor: '#0c4a6e',
+          headline: "What we'll cover",
+          feature1Title: '🔍 Your specific use case',
+          feature1Text: "Jordan reviewed your signup notes — we'll start by addressing the challenges you mentioned.",
+          feature2Title: '⚡ Live product walkthrough',
+          feature2Text: 'A live demo tailored to your team size and industry. No generic slides.',
+          feature3Title: '❓ Q&A',
+          feature3Text: 'The last 10 minutes are open for any questions from you and your team.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#0ea5e9',
+          textColor: '#ffffff',
+          headline: 'Bringing a colleague? Forward this email.',
+          buttonText: 'Join the meeting →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#0ea5e9',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  // ── CORPORATE ─────────────────────────────────────────────────────────────────
+
+  {
+    id: 'corporate-announcement',
+    name: 'Company Announcement',
+    description: 'Major company news shared with customers and stakeholders.',
+    mainCategory: 'corporate',
+    subCategory: 'company-announcement',
+    accentColor: '#475569',
+    sections: [
+      hdr('Acme Inc.', '#0f172a', '#f8fafc'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0f172a',
+          textColor: '#ffffff',
+          headline: 'Acme has raised $20M Series A',
+          subheadline: 'Today we announced a $20M Series A round led by Sequoia Capital. This is what it means for you as a customer.',
+          buttonText: 'Read the full announcement',
+          buttonColor: '#475569',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: 'A message from our CEO',
+          bodyText: "Five years ago, we started Acme with a single goal: make project management feel effortless for engineering teams.\n\nToday, more than 12,000 teams trust Acme to run their operations. This funding lets us accelerate everything — more engineers, faster releases, enterprise security, and deeper integrations.\n\nYour product gets better. Your price stays the same. Thank you for being part of this journey.\n\n— Jamie Chen, CEO",
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f8fafc',
+          textColor: '#0f172a',
+          headline: "What's coming next",
+          buttonText: 'Read our roadmap →',
+          buttonColor: '#475569',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'corporate-hr',
+    name: 'HR Communication',
+    description: 'Internal HR notice for benefits, policy updates, or team news.',
+    mainCategory: 'corporate',
+    subCategory: 'hr-communication',
+    accentColor: '#3b82f6',
+    sections: [
+      hdr('Acme People Team', '#1d4ed8', '#ffffff'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#1e3a8a',
+          textColor: '#ffffff',
+          headline: 'Updated: Parental Leave Policy',
+          subheadline: 'Effective February 1, 2025, Acme is expanding parental leave to 20 weeks for all full-time employees globally.',
+          buttonText: 'Read the updated policy',
+          buttonColor: '#3b82f6',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: 'Key changes',
+          bodyText: "Primary caregivers: 20 weeks fully paid (was 12 weeks)\nSecondary caregivers: 10 weeks fully paid (was 4 weeks)\nAdoptive parents: same 20-week entitlement\nApplication process: updated form now in Lattice\n\nThis update applies to all employees globally, including contractors on long-term engagements of 6+ months.",
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#eff6ff',
+          textColor: '#1e3a8a',
+          headline: 'Other updates in the Feb refresh',
+          feature1Title: '🏥 Health benefits',
+          feature1Text: 'Mental health coverage increased to $2,500/year. Includes therapy, coaching, and apps.',
+          feature2Title: '🏠 Remote stipend',
+          feature2Text: '$1,500/year home office stipend, up from $500. Receipts via Expensify as usual.',
+          feature3Title: '📚 Learning budget',
+          feature3Text: '$2,000/year per employee for courses, books, and conferences. No pre-approval needed.',
+        },
+      },
+      STD_FOOTER('Acme People Team', '123 Main Street, San Francisco, CA 94107'),
+    ],
+  },
+
+  {
+    id: 'corporate-partnership',
+    name: 'Partnership Outreach',
+    description: 'Introduce a strategic partnership or integration collaboration.',
+    mainCategory: 'corporate',
+    subCategory: 'partnership-outreach',
+    accentColor: '#7c3aed',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#2e1065',
+          textColor: '#ffffff',
+          headline: 'Acme + Notion: Better together',
+          subheadline: "We've partnered with Notion to bring a native two-way sync between your wikis and your Acme projects. Available today.",
+          buttonText: 'Connect Notion now',
+          buttonColor: '#7c3aed',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: 'What the integration does',
+          bodyText: "• Sync Notion database rows as Acme tasks automatically\n• Push Acme task updates back to Notion in real time\n• Link any Acme project to a Notion page for instant context\n• Bi-directional comments so your team stays in sync wherever they work\n\nSetup takes under 5 minutes. No technical knowledge needed.",
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f5f3ff',
+          textColor: '#2e1065',
+          headline: 'Free on all Acme plans',
+          buttonText: 'Enable the integration →',
+          buttonColor: '#7c3aed',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  // ── INDUSTRY-SPECIFIC ─────────────────────────────────────────────────────────
+
+  {
+    id: 'industry-real-estate',
+    name: 'Real Estate Showcase',
+    description: 'Promote a new listing or open house to a buyer audience.',
+    mainCategory: 'industry',
+    subCategory: 'real-estate',
+    accentColor: '#b45309',
+    sections: [
+      hdr('Acme Realty', '#1c1917', '#f5f5f4'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#1c1917',
+          textColor: '#ffffff',
+          headline: 'New listing: 142 Maple Grove, Portland',
+          subheadline: '4 bed · 3 bath · 2,400 sqft · $849,000\n\nA stunning mid-century modern in the heart of Sellwood. Open house this Saturday, 12–4 PM.',
+          buttonText: 'View the full listing',
+          buttonColor: '#b45309',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#fefce8',
+          textColor: '#1c1917',
+          headline: 'Property highlights',
+          feature1Title: '🏡 Renovated kitchen',
+          feature1Text: 'Fully remodeled in 2023. Quartz counters, custom cabinetry, and Wolf appliances.',
+          feature2Title: '🌳 Private backyard',
+          feature2Text: "900 sqft of landscaped outdoor space with a deck and mature trees. Fully fenced.",
+          feature3Title: '📍 Prime location',
+          feature3Text: "Two blocks from Sellwood Park, walkable to cafes, restaurants, and top-rated schools.",
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#b45309',
+          textColor: '#ffffff',
+          headline: 'Open house: Saturday Jan 25 · 12:00 – 4:00 PM',
+          buttonText: 'RSVP for the open house',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#b45309',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER('Acme Realty', '44 SE Morrison Street, Portland, OR 97214'),
+    ],
+  },
+
+  {
+    id: 'industry-restaurant',
+    name: 'Restaurant Reservation',
+    description: 'Confirm a dining reservation and share arrival details.',
+    mainCategory: 'industry',
+    subCategory: 'restaurant',
+    accentColor: '#dc2626',
+    sections: [
+      hdr('Osteria Acme', '#1a0a00', '#fef3c7'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#7f1d1d',
+          textColor: '#ffffff',
+          headline: "Your table is confirmed 🍽️",
+          subheadline: "We're looking forward to having you at Osteria Acme. Your reservation details are below.",
+          buttonText: 'Add to calendar',
+          buttonColor: '#dc2626',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#fff7ed',
+          textColor: '#7f1d1d',
+          headline: 'Reservation details',
+          feature1Title: '📅 Date & time',
+          feature1Text: 'Friday, January 31, 2025\n7:30 PM · Party of 4',
+          feature2Title: '📍 Location',
+          feature2Text: '88 North Beach Blvd, San Francisco\nValet parking available on-site from 6 PM',
+          feature3Title: '📞 Contact us',
+          feature3Text: 'Need to change or cancel? Call us at (415) 555-0142 or reply to this email. 24-hour cancellation policy.',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          bodyText: "Tonight's menu features our seasonal truffle tasting experience and a new selection of biodynamic wines from the Piedmont region. Let us know about any dietary requirements in advance and we'll take care of you.",
+        },
+      },
+      STD_FOOTER('Osteria Acme', '88 North Beach Blvd, San Francisco, CA 94133'),
+    ],
+  },
+
+  {
+    id: 'industry-healthcare',
+    name: 'Healthcare Appointment',
+    description: 'Confirm a medical appointment with pre-visit instructions.',
+    mainCategory: 'industry',
+    subCategory: 'healthcare',
+    accentColor: '#0891b2',
+    sections: [
+      hdr('Acme Health', '#164e63', '#ecfeff'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#164e63',
+          textColor: '#ffffff',
+          headline: 'Appointment confirmed ✅',
+          subheadline: 'Your upcoming appointment with Dr. Sarah Lee has been scheduled. Please review the details below.',
+          buttonText: 'View appointment details',
+          buttonColor: '#0891b2',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#ecfeff',
+          textColor: '#164e63',
+          headline: 'Your appointment',
+          feature1Title: '📅 When',
+          feature1Text: 'Tuesday, February 4, 2025 · 10:15 AM\nDr. Sarah Lee — General Practice',
+          feature2Title: '📍 Where',
+          feature2Text: 'Acme Health Clinic\n320 Market Street, Suite 4, San Francisco\nFree parking in lot B',
+          feature3Title: '📋 What to bring',
+          feature3Text: 'Photo ID, insurance card, list of current medications, and completed intake form (link below).',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#0891b2',
+          textColor: '#ffffff',
+          headline: 'Please complete your intake form before your visit',
+          buttonText: 'Complete intake form →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#0891b2',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER('Acme Health', '320 Market Street, San Francisco, CA 94105'),
+    ],
+  },
+
+  // ── HOLIDAY & SEASONAL ────────────────────────────────────────────────────────
+
+  {
+    id: 'seasonal-black-friday',
+    name: 'Black Friday',
+    description: 'High-impact Black Friday sale announcement with urgency.',
+    mainCategory: 'seasonal',
+    subCategory: 'black-friday',
+    accentColor: '#eab308',
+    sections: [
+      hdr('Acme', '#09090b', '#f4f4f5'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#09090b',
+          textColor: '#ffffff',
+          headline: 'Black Friday: 50% off everything',
+          subheadline: 'Our biggest deal ever. Today only. No exceptions, no exclusions.',
+          buttonText: 'Shop the sale →',
+          buttonColor: '#eab308',
+          buttonTextColor: '#09090b',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#1c1917',
+          textColor: '#fef9c3',
+          headline: "What's included",
+          feature1Title: '🚀 Acme Pro — $49/mo',
+          feature1Text: 'Was $99. Full access to every feature, unlimited projects, priority support.',
+          feature2Title: '👥 Team plan — $79/mo',
+          feature2Text: 'Was $159. Up to 20 seats, admin controls, SSO, audit logs.',
+          feature3Title: '🏢 Enterprise — call us',
+          feature3Text: 'Custom pricing for 50+ seats. Book a call today and mention BF2025 for 50% off.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#eab308',
+          textColor: '#09090b',
+          headline: 'Sale ends at midnight. Code: BF2025',
+          buttonText: 'Claim 50% off now',
+          buttonColor: '#09090b',
+          buttonTextColor: '#eab308',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'seasonal-christmas',
+    name: 'Christmas Campaign',
+    description: 'Warm holiday email with a seasonal message and offer.',
+    mainCategory: 'seasonal',
+    subCategory: 'christmas',
+    accentColor: '#dc2626',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#14532d',
+          textColor: '#ffffff',
+          headline: 'Happy Holidays from Acme 🎄',
+          subheadline: "As 2024 wraps up, we want to thank you for being part of our community this year. Here's a little something from us.",
+          buttonText: 'Unwrap your gift →',
+          buttonColor: '#dc2626',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f0fdf4',
+          textColor: '#14532d',
+          headline: 'What a year it was',
+          feature1Title: '✨ 3 major releases',
+          feature1Text: "Collaboration, analytics, and the new automation engine. Our biggest shipping year ever.",
+          feature2Title: '💌 12,000+ teams',
+          feature2Text: "You helped us grow to 12,000 active teams across 78 countries. We're humbled and grateful.",
+          feature3Title: '🎁 Your holiday gift',
+          feature3Text: '2 months free on annual — code HOLIDAY24. Valid through January 15.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#dc2626',
+          textColor: '#ffffff',
+          headline: 'Wishing you a wonderful new year 🎉',
+          buttonText: 'Claim your 2 free months',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#dc2626',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'seasonal-new-year',
+    name: 'New Year Campaign',
+    description: 'Kick off the new year with a message and forward-looking offer.',
+    mainCategory: 'seasonal',
+    subCategory: 'new-year',
+    accentColor: '#a78bfa',
+    sections: [
+      hdr('Acme', '#0a0a0f', '#f4f4f5'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0a0a0f',
+          textColor: '#ffffff',
+          headline: '✨ Happy New Year — make 2025 count',
+          subheadline: 'New year, new goals. Acme is here to help your team execute faster and waste less time on process.',
+          buttonText: 'Start 2025 strong →',
+          buttonColor: '#a78bfa',
+          buttonTextColor: '#0a0a0f',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#1e1b4b',
+          textColor: '#ffffff',
+          headline: 'New Year offer: 20% off annual plans through Jan 31',
+          buttonText: 'Upgrade now — code NY2025',
+          buttonColor: '#a78bfa',
+          buttonTextColor: '#1e1b4b',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  // ── INTERACTIVE ───────────────────────────────────────────────────────────────
+
+  {
+    id: 'interactive-poll',
+    name: 'Poll Email',
+    description: "Embed a simple poll to gauge audience opinions directly in email.",
+    mainCategory: 'interactive',
+    subCategory: 'poll-email',
+    accentColor: '#06b6d4',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#164e63',
+          textColor: '#ffffff',
+          headline: 'Quick question for you 🗳️',
+          subheadline: 'We\'re deciding what to build next in Q1. Your vote will directly influence our roadmap. Takes 10 seconds.',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#ecfeff',
+          textColor: '#164e63',
+          headline: 'What should we build next?',
+          feature1Title: '🤖 AI writing assistant',
+          feature1Text: "Smart suggestions and auto-draft tools built directly into your Acme workspace.\n👉 Vote for this →",
+          feature2Title: '📅 Calendar integration',
+          feature2Text: "Two-way sync with Google Calendar and Outlook. See tasks and meetings in one view.\n👉 Vote for this →",
+          feature3Title: '📊 Advanced reporting',
+          feature3Text: "Custom dashboards, scheduled reports, and exportable data in any format.\n👉 Vote for this →",
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#06b6d4',
+          textColor: '#ffffff',
+          headline: 'Cast your vote — results published next Friday',
+          buttonText: 'Vote now →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#06b6d4',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'interactive-quiz',
+    name: 'Quiz Email',
+    description: 'Engage subscribers with a quick knowledge quiz or product assessment.',
+    mainCategory: 'interactive',
+    subCategory: 'quiz-email',
+    accentColor: '#7c3aed',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#2e1065',
+          textColor: '#ffffff',
+          headline: '🧠 Quiz: What type of builder are you?',
+          subheadline: "Answer 4 quick questions and we'll tell you which Acme workflow matches your working style — plus the template to start with.",
+          buttonText: 'Take the quiz',
+          buttonColor: '#7c3aed',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: 'The four builder types',
+          bodyText: "🗂️ The Planner — You live in docs and spreadsheets. Structure first, execute second.\n\n⚡ The Sprinter — You move fast and fix it later. Ship it, iterate, repeat.\n\n🔗 The Connector — You're the glue. Your job is aligning teams across tools and timelines.\n\n🔬 The Analyst — Data drives every decision. You want dashboards, not gut feelings.\n\nWhich one are you? Take the quiz to find out.",
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f5f3ff',
+          textColor: '#2e1065',
+          headline: 'What you get after the quiz',
+          feature1Title: '📋 Your builder profile',
+          feature1Text: 'A detailed breakdown of your working style and what tools complement it.',
+          feature2Title: '🗂️ A starter template',
+          feature2Text: 'A pre-built Acme workspace configured for your builder type. One click to import.',
+          feature3Title: '📌 3 custom tips',
+          feature3Text: 'Actionable advice for getting the most out of Acme based on how you work.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#7c3aed',
+          textColor: '#ffffff',
+          headline: '4 questions · 2 minutes · 100% worth it',
+          buttonText: 'Start the quiz →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#7c3aed',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+
+  {
+    id: 'interactive-survey-email',
+    name: 'Interactive Survey',
+    description: 'Invite subscribers to complete a short in-email survey.',
+    mainCategory: 'interactive',
+    subCategory: 'interactive-survey',
+    accentColor: '#0891b2',
+    sections: [
+      hdr('Acme'),
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0c4a6e',
+          textColor: '#ffffff',
+          headline: '2 minutes to shape the future of Acme',
+          subheadline: "Every quarter we run a short survey to prioritize the roadmap. This is your chance to tell us what matters most.",
+          buttonText: 'Start survey',
+          buttonColor: '#0891b2',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          headline: "What we're asking about",
+          bodyText: "This quarter's survey has 5 questions covering:\n\n• Which features you use most (and least)\n• What's slowing your team down the most right now\n• Which integrations you'd like us to build\n• How Acme compares to your previous tools\n• Your overall satisfaction score\n\nAll responses are anonymous. Results are shared publicly with the community.",
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#ecfeff',
+          textColor: '#0c4a6e',
+          headline: "5 questions · completely anonymous · takes 2 minutes",
+          buttonText: 'Give my feedback →',
+          buttonColor: '#0891b2',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      STD_FOOTER(),
+    ],
+  },
+];
