@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/CPANEL_USERNAME/APP_DIR/
+    - /bin/cp -R . $DEPLOYPATH
+    - cd $DEPLOYPATH
+    - npm ci
+    - npm run build
+    - /bin/cp -R public $DEPLOYPATH/.next/standalone/public
+    - /bin/cp -R .next/static $DEPLOYPATH/.next/standalone/.next/static
