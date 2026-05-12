@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/CPANEL_USERNAME/APP_DIR/
+    - export DEPLOYPATH=/home/chefxmkt/public_html/wizemail
     - /bin/cp -R . $DEPLOYPATH
     - cd $DEPLOYPATH
     - npm ci
