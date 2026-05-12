@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  output: 'standalone',
-};
+  const nextConfig: NextConfig = {
+    output: 'standalone',
+    basePath: '/wizemail',
+  };
 
-export default nextConfig;
+  export default nextConfig;
