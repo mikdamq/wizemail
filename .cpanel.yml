@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/chefxmkt/public_html/wizemail
+    - export DEPLOYPATH=/home/chefxmkt/wizemail.mikdam.com
     - /bin/cp -R . $DEPLOYPATH
     - cd $DEPLOYPATH
     - npm ci
