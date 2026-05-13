@@ -2,8 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
-  DndContext, closestCenter, DragEndEvent,
-  useSensor, useSensors, PointerSensor,
+  DndContext, closestCenter, DragEndEvent, DragOverEvent, DragStartEvent,
+  useSensor, useSensors, PointerSensor, DragOverlay,
 } from '@dnd-kit/core';
 import {
   SortableContext, verticalListSortingStrategy, rectSortingStrategy, useSortable,
@@ -328,38 +328,26 @@ function SortableRowItem({
   row,
   onOpenBrowser,
   onSaveBlock,
+  isColDragActive,
 }: {
   row: EmailRow;
   onOpenBrowser: (mode: BrowserMode) => void;
   onSaveBlock: (row: EmailRow) => void;
+  isColDragActive?: boolean;
 }) {
-  const { selected, removeRow, duplicateRow, addColumnToRow, reorderColumnsInRow } = useEmailStore();
+  const { selected, removeRow, duplicateRow, addColumnToRow } = useEmailStore();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
 
   const isSingleCol = row.columns.length === 1;
-
-  // Inner sensors for column reordering — separate from row-level sensors
-  const colSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-
-  const handleColDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIdx = row.columns.findIndex((c) => c.id === active.id);
-      const newIdx = row.columns.findIndex((c) => c.id === over.id);
-      if (oldIdx !== -1 && newIdx !== -1) {
-        reorderColumnsInRow(row.id, oldIdx, newIdx);
-      }
-    }
-  };
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
-      className="group rounded-lg border border-[#2a2a2e] bg-[#1c1c1f] hover:border-[#3a3a3e] transition-colors"
+      className={`group rounded-lg border bg-[#1c1c1f] transition-colors ${isColDragActive ? 'border-[#6366f1]/40 bg-[#6366f1]/5' : 'border-[#2a2a2e] hover:border-[#3a3a3e]'}`}
     >
       <div className="flex items-center gap-1.5 px-1.5 py-1.5">
-        {/* Row drag handle — only this element gets row-level listeners */}
+        {/* Row drag handle */}
         <div
           {...attributes}
           {...listeners}
@@ -369,27 +357,25 @@ function SortableRowItem({
           <GripVertical className="w-3 h-3" />
         </div>
 
-        {/* Column chips with inner DnD for reordering */}
-        <DndContext sensors={colSensors} collisionDetection={closestCenter} onDragEnd={handleColDragEnd}>
-          <SortableContext items={row.columns.map((c) => c.id)} strategy={rectSortingStrategy}>
-            <div className="flex items-center gap-1 flex-1 min-w-0 flex-wrap">
-              {row.columns.map((col, colIdx) => {
-                const isSelected = selected?.rowId === row.id && selected.colIdx === colIdx;
-                return (
-                  <SortableColumnChip
-                    key={col.id}
-                    col={col}
-                    isSelected={isSelected}
-                    canRemove={!isSingleCol}
-                    rowId={row.id}
-                    colIdx={colIdx}
-                    onFill={() => onOpenBrowser({ kind: 'fill-slot', rowId: row.id, colIdx })}
-                  />
-                );
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
+        {/* Column chips — sortable within this row (handled by outer DndContext) */}
+        <SortableContext items={row.columns.map((c) => c.id)} strategy={rectSortingStrategy}>
+          <div className="flex items-center gap-1 flex-1 min-w-0 flex-wrap">
+            {row.columns.map((col, colIdx) => {
+              const isSelected = selected?.rowId === row.id && selected.colIdx === colIdx;
+              return (
+                <SortableColumnChip
+                  key={col.id}
+                  col={col}
+                  isSelected={isSelected}
+                  canRemove={!isSingleCol}
+                  rowId={row.id}
+                  colIdx={colIdx}
+                  onFill={() => onOpenBrowser({ kind: 'fill-slot', rowId: row.id, colIdx })}
+                />
+              );
+            })}
+          </div>
+        </SortableContext>
 
         {/* Row actions */}
         <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -436,7 +422,8 @@ function SortableRowItem({
 /* ─── LeftSidebar ────────────────────────────────────────── */
 
 export function LeftSidebar() {
-  const { rows, reorderRows } = useEmailStore();
+  const { rows, reorderRows, reorderColumnsInRow, moveColumnBetweenRows } = useEmailStore();
+  const [activeColDragRowId, setActiveColDragRowId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'structure' | 'details' | 'brand'>('structure');
   const [browserMode, setBrowserMode] = useState<BrowserMode | null>(null);
   const [showBlocks, setShowBlocks] = useState(false);
@@ -498,13 +485,65 @@ export function LeftSidebar() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
+  // Build lookup maps for fast ID resolution
+  const rowIds = rows.map((r) => r.id);
+  const colToRow: Record<string, string> = {};
+  for (const r of rows) for (const c of r.columns) colToRow[c.id] = r.id;
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const activeId = String(event.active.id);
+    // If dragging a column chip, highlight its row
+    if (colToRow[activeId]) setActiveColDragRowId(colToRow[activeId]);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const activeId = String(event.active.id);
+    const overId = event.over ? String(event.over.id) : null;
+    if (!colToRow[activeId] || !overId) return;
+    // highlight the row being hovered
+    const targetRowId = colToRow[overId] ?? (rowIds.includes(overId) ? overId : null);
+    if (targetRowId) setActiveColDragRowId(targetRowId);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveColDragRowId(null);
     const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = rows.findIndex((r) => r.id === active.id);
-      const newIndex = rows.findIndex((r) => r.id === over.id);
-      reorderRows(oldIndex, newIndex);
-      toast('Rows reordered', { icon: '↕️' });
+    if (!over || active.id === over.id) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    const isActiveRow = rowIds.includes(activeId);
+    const isActiveCol = !!colToRow[activeId];
+
+    if (isActiveRow) {
+      // Row reorder
+      const oldIndex = rows.findIndex((r) => r.id === activeId);
+      const newIndex = rows.findIndex((r) => r.id === overId);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderRows(oldIndex, newIndex);
+        toast('Rows reordered', { icon: '↕️' });
+      }
+    } else if (isActiveCol) {
+      const fromRowId = colToRow[activeId];
+      const overRowId = colToRow[overId] ?? (rowIds.includes(overId) ? overId : null);
+      if (!overRowId) return;
+
+      if (fromRowId === overRowId) {
+        // Same-row reorder
+        const row = rows.find((r) => r.id === fromRowId)!;
+        const oldIdx = row.columns.findIndex((c) => c.id === activeId);
+        const newIdx = row.columns.findIndex((c) => c.id === overId);
+        if (oldIdx !== -1 && newIdx !== -1) reorderColumnsInRow(fromRowId, oldIdx, newIdx);
+      } else {
+        // Cross-row move
+        const toRow = rows.find((r) => r.id === overRowId)!;
+        const toIndex = colToRow[overId]
+          ? toRow.columns.findIndex((c) => c.id === overId)
+          : toRow.columns.length;
+        moveColumnBetweenRows(fromRowId, activeId, overRowId, toIndex < 0 ? 0 : toIndex);
+        toast('Section moved to row', { icon: '↔️' });
+      }
     }
   };
 
@@ -602,7 +641,13 @@ export function LeftSidebar() {
                 <p className="text-[10px] text-[#3a3a3e] mt-1">Add a section to get started</p>
               </div>
             ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+              >
                 <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
                   <div className="space-y-1">
                     {rows.map((row) => (
@@ -611,6 +656,7 @@ export function LeftSidebar() {
                         row={row}
                         onOpenBrowser={(mode) => setBrowserMode(mode)}
                         onSaveBlock={handleSaveBlock}
+                        isColDragActive={activeColDragRowId !== null && row.id !== activeColDragRowId}
                       />
                     ))}
                   </div>

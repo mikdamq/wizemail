@@ -244,19 +244,19 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
     <>
       {type === 'hero' && (
         <>
-          <Group title="Colors">
-            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
-          </Group>
-          <Group title="Content">
+          <CollapsibleGroup title="Content" defaultOpen={true}>
             <TextField label="Headline" value={content.headline} onChange={u('headline')} aiButton={<AiBtn field="headline" updateKey="headline" />} />
             <TextField label="Subheadline" value={content.subheadline} onChange={u('subheadline')} aiButton={<AiBtn field="subheadline" updateKey="subheadline" />} />
             <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} aiButton={<AiBtn field="buttonText" updateKey="buttonText" />} />
             <TextField label="Button URL" value={content.buttonUrl} onChange={u('buttonUrl')} />
             <ColorField label="Button color" value={content.buttonColor} onChange={u('buttonColor')} />
             <ColorField label="Text color" value={content.buttonTextColor} onChange={u('buttonTextColor')} />
-          </Group>
-          <Group title="Background image">
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Colors">
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Background image">
             <ImageUploadField value={content.backgroundImageUrl} onChange={u('backgroundImageUrl')} />
             <div className="flex gap-1">
               {(['cover', 'contain', 'auto'] as const).map((size) => (
@@ -273,39 +273,39 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
                 </button>
               ))}
             </div>
-          </Group>
+          </CollapsibleGroup>
         </>
       )}
 
       {type === 'cta' && (
         <>
-          <Group title="Colors">
-            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
-          </Group>
-          <Group title="Content">
+          <CollapsibleGroup title="Content" defaultOpen={true}>
             <TextField label="Headline" value={content.headline} onChange={u('headline')} aiButton={<AiBtn field="headline" updateKey="headline" />} />
             <TextField label="Body text" value={content.bodyText} onChange={u('bodyText')} multiline aiButton={<AiBtn field="body" updateKey="bodyText" />} />
             <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} aiButton={<AiBtn field="buttonText" updateKey="buttonText" />} />
             <TextField label="Button URL" value={content.buttonUrl} onChange={u('buttonUrl')} />
             <ColorField label="Button color" value={content.buttonColor} onChange={u('buttonColor')} />
             <ColorField label="Text color" value={content.buttonTextColor} onChange={u('buttonTextColor')} />
-          </Group>
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Colors">
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+          </CollapsibleGroup>
         </>
       )}
 
       {type === 'text' && (
-        <Group title="Content">
+        <CollapsibleGroup title="Content" defaultOpen={true}>
           <TextField label="Headline" value={content.headline} onChange={u('headline')} aiButton={<AiBtn field="headline" updateKey="headline" />} />
           <TextField label="Body text" value={content.bodyText} onChange={u('bodyText')} multiline aiButton={<AiBtn field="body" updateKey="bodyText" />} />
-        </Group>
+        </CollapsibleGroup>
       )}
 
       {type === 'image' && (
-        <Group title="Image">
+        <CollapsibleGroup title="Image" defaultOpen={true}>
           <ImageUploadField value={content.imageUrl} onChange={u('imageUrl')} />
           <TextField label="Alt text" value={content.imageAlt} onChange={u('imageAlt')} placeholder="Describe the image" />
-        </Group>
+        </CollapsibleGroup>
       )}
 
       {type === 'features' && (() => {
@@ -320,10 +320,10 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
           onUpdate({ featureItems: featureItems.map((item, idx) => idx === i ? { ...item, [key]: v } : item) });
         return (
           <>
-            <Group title="Headline">
+            <CollapsibleGroup title="Headline" defaultOpen={true}>
               <TextField label="Section title" value={content.headline} onChange={u('headline')} />
-            </Group>
-            <Group title="Items">
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Items" defaultOpen={true}>
               <div className="space-y-2">
                 {featureItems.map((item, i) => (
                   <div key={i} className="rounded-lg border border-[#2a2a2e] p-2 space-y-2">
@@ -348,17 +348,17 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
                   Add feature
                 </button>
               </div>
-            </Group>
+            </CollapsibleGroup>
           </>
         );
       })()}
 
       {type === 'testimonial' && (
-        <Group title="Quote">
+        <CollapsibleGroup title="Quote" defaultOpen={true}>
           <TextField label="Quote" value={content.quoteText} onChange={u('quoteText')} multiline />
           <TextField label="Author name" value={content.authorName} onChange={u('authorName')} />
           <TextField label="Author title" value={content.authorTitle} onChange={u('authorTitle')} />
-        </Group>
+        </CollapsibleGroup>
       )}
 
       {type === 'social' && (() => {
@@ -372,7 +372,7 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
         const updateSocialLink = (i: number, key: 'label' | 'url', v: string) =>
           onUpdate({ socialLinks: socialLinks.map((link, idx) => idx === i ? { ...link, [key]: v } : link) });
         return (
-          <Group title="Links">
+          <CollapsibleGroup title="Links" defaultOpen={true}>
             <div className="space-y-2">
               {socialLinks.map((link, i) => (
                 <div key={i} className="rounded-lg border border-[#2a2a2e] p-2 space-y-2">
@@ -397,17 +397,13 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
                 Add link
               </button>
             </div>
-          </Group>
+          </CollapsibleGroup>
         );
       })()}
 
       {type === 'list' && (
         <>
-          <Group title="Colors">
-            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
-          </Group>
-          <Group title="List items">
+          <CollapsibleGroup title="List items" defaultOpen={true}>
             <TextField
               label="Items (one per line)"
               value={content.listItems}
@@ -437,89 +433,91 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
                 ))}
               </div>
             </div>
-          </Group>
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Colors">
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+          </CollapsibleGroup>
         </>
       )}
 
       {type === 'announcement' && (
         <>
-          <Group title="Colors">
-            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
-          </Group>
-          <Group title="Content">
+          <CollapsibleGroup title="Content" defaultOpen={true}>
             <TextField label="Headline" value={content.headline} onChange={u('headline')} aiButton={<AiBtn field="headline" updateKey="headline" />} />
             <TextField label="Body text" value={content.bodyText} onChange={u('bodyText')} multiline aiButton={<AiBtn field="body" updateKey="bodyText" />} />
-          </Group>
-          <Group title="Button">
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Button">
             <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} aiButton={<AiBtn field="buttonText" updateKey="buttonText" />} />
             <TextField label="Button URL" value={content.buttonUrl} onChange={u('buttonUrl')} />
             <ColorField label="Button color" value={content.buttonColor} onChange={u('buttonColor')} />
             <ColorField label="Text color" value={content.buttonTextColor} onChange={u('buttonTextColor')} />
-          </Group>
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Colors">
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+          </CollapsibleGroup>
         </>
       )}
 
       {type === 'product-card' && (
         <>
-          <Group title="Colors">
-            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
-          </Group>
-          <Group title="Product">
+          <CollapsibleGroup title="Product" defaultOpen={true}>
             <TextField label="Name" value={content.headline} onChange={u('headline')} />
             <TextField label="Description" value={content.bodyText} onChange={u('bodyText')} multiline />
             <TextField label="Price" value={content.productPrice} onChange={u('productPrice')} placeholder="$99.00" />
-          </Group>
-          <Group title="Image">
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Image">
             <ImageUploadField value={content.imageUrl} onChange={u('imageUrl')} />
             <TextField label="Alt text" value={content.imageAlt} onChange={u('imageAlt')} placeholder="Describe the image" />
-          </Group>
-          <Group title="Button">
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Button">
             <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} />
             <TextField label="Button URL" value={content.buttonUrl} onChange={u('buttonUrl')} />
             <ColorField label="Button color" value={content.buttonColor} onChange={u('buttonColor')} />
             <ColorField label="Text color" value={content.buttonTextColor} onChange={u('buttonTextColor')} />
-          </Group>
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Colors">
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+          </CollapsibleGroup>
         </>
       )}
 
       {type === 'header' && (
-        <>
-          <Group title="Brand">
-            <TextField label="Logo text" value={content.logoText} onChange={u('logoText')} placeholder="Your Brand" />
-            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
-          </Group>
-        </>
+        <CollapsibleGroup title="Brand" defaultOpen={true}>
+          <TextField label="Logo text" value={content.logoText} onChange={u('logoText')} placeholder="Your Brand" />
+          <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+          <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+        </CollapsibleGroup>
       )}
 
       {type === 'footer' && (
         <>
-          <Group title="Company">
+          <CollapsibleGroup title="Company" defaultOpen={true}>
             <TextField label="Company name" value={content.companyName} onChange={u('companyName')} placeholder="Your Company" />
             <TextField label="Address" value={content.companyAddress} onChange={u('companyAddress')} multiline placeholder="123 Main St, City, Country" />
             <TextField label="Unsubscribe URL" value={content.unsubscribeUrl} onChange={u('unsubscribeUrl')} placeholder="https://…/unsubscribe" />
-          </Group>
-          <Group title="Colors">
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Colors">
             <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
             <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
-          </Group>
+          </CollapsibleGroup>
         </>
       )}
 
       {type === 'button-row' && (
         <>
-          <Group title="Button">
+          <CollapsibleGroup title="Button" defaultOpen={true}>
             <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} placeholder="Click here" />
             <TextField label="Button URL" value={content.buttonUrl} onChange={u('buttonUrl')} placeholder="https://…" />
-          </Group>
-          <Group title="Colors">
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Colors">
             <ColorField label="Button color" value={content.buttonColor} onChange={u('buttonColor')} />
             <ColorField label="Text color" value={content.buttonTextColor} onChange={u('buttonTextColor')} />
             <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-          </Group>
-          <Group title="Align">
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Align">
             <div className="flex gap-1">
               {(['left', 'center', 'right'] as const).map((align) => (
                 <button
@@ -535,26 +533,26 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
                 </button>
               ))}
             </div>
-          </Group>
+          </CollapsibleGroup>
         </>
       )}
 
       {type === 'divider' && (
-        <Group title="Colors">
+        <CollapsibleGroup title="Colors" defaultOpen={true}>
           <ColorField label="Divider color" value={content.dividerColor} onChange={u('dividerColor')} />
           <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-        </Group>
+        </CollapsibleGroup>
       )}
 
       {type === 'spacer' && (
-        <Group title="Size">
+        <CollapsibleGroup title="Size" defaultOpen={true}>
           <NumberField label="Height (px)" value={content.spacerHeight} onChange={u('spacerHeight')} min={4} max={200} />
           <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-        </Group>
+        </CollapsibleGroup>
       )}
 
       {type === 'html' && (
-        <Group title="HTML">
+        <CollapsibleGroup title="HTML" defaultOpen={true}>
           <div className="rounded-md overflow-hidden border border-[#2a2a2e]">
             <MonacoEditor
               height={220}
@@ -572,7 +570,7 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
               }}
             />
           </div>
-        </Group>
+        </CollapsibleGroup>
       )}
 
       {/* ── Typography controls ── */}
@@ -580,23 +578,19 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
         <CollapsibleGroup title="Typography">
           {['hero', 'text', 'cta', 'announcement', 'features', 'header'].includes(type) && (
             <>
-              <SliderField
-                label="Headline size"
+              <NumberField
+                label="Headline size (px)"
                 value={content.headlineFontSize}
-                defaultValue={type === 'hero' ? 36 : type === 'cta' ? 28 : type === 'announcement' ? 28 : type === 'header' ? 20 : 22}
                 onChange={(v) => onUpdate({ headlineFontSize: v })}
                 min={12}
-                max={48}
-                unit="px"
+                max={72}
               />
-              <SliderField
-                label="Body size"
+              <NumberField
+                label="Body size (px)"
                 value={content.bodyFontSize}
-                defaultValue={16}
                 onChange={(v) => onUpdate({ bodyFontSize: v })}
-                min={12}
-                max={24}
-                unit="px"
+                min={10}
+                max={32}
               />
             </>
           )}

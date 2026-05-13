@@ -68,6 +68,7 @@ interface EmailStore {
   addColumnToRow: (rowId: string, type?: SectionType) => void;
   removeColumnFromRow: (rowId: string, colIdx: number) => void;
   reorderColumnsInRow: (rowId: string, oldIndex: number, newIndex: number) => void;
+  moveColumnBetweenRows: (fromRowId: string, colId: string, toRowId: string, toIndex: number) => void;
   updateColumnSpacing: (rowId: string, colIdx: number, spacing: Partial<Pick<EmailColumn, 'paddingTop' | 'paddingBottom' | 'paddingLeft' | 'paddingRight'>>) => void;
 
   // Brand kit
@@ -87,6 +88,7 @@ interface EmailStore {
   removeVariable: (key: string) => void;
   loadTemplate: (template: EmailTemplate) => void;
   loadSavedDesign: (design: SavedDesign) => void;
+  loadHtml: (html: string) => void;
   getAssembledHTML: () => string;
 }
 
@@ -348,6 +350,34 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
       hasUnsavedChanges: !!state.currentDesignId,
     })),
 
+  moveColumnBetweenRows: (fromRowId, colId, toRowId, toIndex) =>
+    set((state) => {
+      const fromRow = state.rows.find((r) => r.id === fromRowId);
+      if (!fromRow) return {};
+      const col = fromRow.columns.find((c) => c.id === colId);
+      if (!col) return {};
+
+      const newRows = state.rows.map((r) => {
+        if (r.id === fromRowId) {
+          const cols = r.columns.filter((c) => c.id !== colId);
+          return cols.length > 0 ? { ...r, columns: cols } : null;
+        }
+        if (r.id === toRowId) {
+          const cols = [...r.columns];
+          cols.splice(toIndex, 0, col);
+          return { ...r, columns: cols };
+        }
+        return r;
+      }).filter(Boolean) as typeof state.rows;
+
+      return {
+        rows: newRows,
+        past: pushHistory(state.past, state.rows),
+        future: [],
+        hasUnsavedChanges: !!state.currentDesignId,
+      };
+    }),
+
   updateColumnSpacing: (rowId, colIdx, spacing) =>
     set((state) => ({
       rows: state.rows.map((r) =>
@@ -478,6 +508,21 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
       currentDesignName: design.name,
       currentDesignVersion: design.version ?? null,
       hasUnsavedChanges: false,
+    });
+  },
+
+  loadHtml: (html) => {
+    const id = Math.random().toString(36).slice(2, 9);
+    set({
+      rows: [{ id, columns: [{ id: id + 'c', type: 'html', content: { customHtml: html } }] }],
+      past: [],
+      future: [],
+      selected: null,
+      mode: 'visual',
+      currentDesignId: null,
+      currentDesignName: 'Imported HTML',
+      currentDesignVersion: null,
+      hasUnsavedChanges: true,
     });
   },
 

@@ -5,9 +5,10 @@ import Link from 'next/link';
 import {
   Mail, Eye, Code2, Columns2, Monitor, Tablet, Smartphone,
   Sun, Moon, Download, Copy, Check, ChevronDown, ImageIcon, Layers, Code,
-  Save, BookOpen, Braces, Plus, X, SendHorizonal, Pencil, Undo2, Redo2,
+  Save, BookOpen, Braces, Plus, X, SendHorizonal, Pencil, Undo2, Redo2, Upload,
 } from 'lucide-react';
 import { SendTestModal } from '@/components/builder/SendTestModal';
+import { ImportHtmlModal } from '@/components/builder/ImportHtmlModal';
 import { AccountMenu } from '@/components/auth/AccountMenu';
 import { toast } from 'sonner';
 import { useEmailStore } from '@/store/email-store';
@@ -73,6 +74,7 @@ export function TopBar() {
   const [clientOpen, setClientOpen] = useState(false);
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [sendTestOpen, setSendTestOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [exporting, setExporting] = useState<string | null>(null);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState('');
@@ -437,6 +439,16 @@ export function TopBar() {
         )}
       </div>
 
+      {/* Import HTML button */}
+      <button
+        onClick={() => setImportOpen(true)}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors mr-1"
+        title="Import HTML email"
+      >
+        <Upload className="w-3.5 h-3.5" />
+        Import
+      </button>
+
       {/* My Emails + Templates links */}
       <Link
         href="/emails"
@@ -578,6 +590,9 @@ export function TopBar() {
           onClose={() => setSendTestOpen(false)}
         />
       )}
+
+      {/* Import HTML modal */}
+      {importOpen && <ImportHtmlModal onClose={() => setImportOpen(false)} />}
 
       {/* Save dialog */}
       {saveDialogOpen && (

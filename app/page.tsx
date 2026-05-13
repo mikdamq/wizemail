@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Mail, FileCode, Upload, Layout, Zap, Layers, BookOpen } from 'lucide-react';
+import { ImportHtmlModal } from '@/components/builder/ImportHtmlModal';
 
 export default function DashboardPage() {
+  const [importOpen, setImportOpen] = useState(false);
   return (
     <div className="min-h-screen bg-[#0f0f11] flex flex-col">
       <header className="border-b border-[#2a2a2e] px-8 h-14 flex items-center justify-between flex-shrink-0">
@@ -56,9 +59,9 @@ export default function DashboardPage() {
             <div className="absolute top-4 right-4 text-[#3a3a3e] group-hover:text-[#10b981]/60 transition-colors text-xs">→</div>
           </Link>
 
-          <Link
-            href="/builder"
-            className="group relative flex flex-col items-start p-5 rounded-xl bg-[#161618] border border-[#2a2a2e] hover:border-[#f59e0b]/40 hover:bg-[#1c1c1f] transition-all duration-150"
+          <button
+            onClick={() => setImportOpen(true)}
+            className="group relative flex flex-col items-start p-5 rounded-xl bg-[#161618] border border-[#2a2a2e] hover:border-[#f59e0b]/40 hover:bg-[#1c1c1f] transition-all duration-150 text-left"
           >
             <div className="w-9 h-9 rounded-lg bg-[#f59e0b]/10 flex items-center justify-center mb-4 group-hover:bg-[#f59e0b]/20 transition-colors">
               <Upload className="w-4 h-4 text-[#f59e0b]" />
@@ -66,7 +69,7 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-[#f4f4f5] mb-1">Import HTML</p>
             <p className="text-xs text-[#71717a] leading-relaxed">Paste or upload existing HTML email</p>
             <div className="absolute top-4 right-4 text-[#3a3a3e] group-hover:text-[#f59e0b]/60 transition-colors text-xs">→</div>
-          </Link>
+          </button>
 
           <Link
             href="/emails"
@@ -95,6 +98,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {importOpen && <ImportHtmlModal onClose={() => setImportOpen(false)} />}
     </div>
   );
 }

@@ -76,6 +76,7 @@ export function AccountMenu() {
         <div className="w-6 h-6 rounded-full bg-[#6366f1] flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0">
           {initial}
         </div>
+        <span className="hidden md:block text-[11px] text-[#a1a1aa] max-w-[120px] truncate group-hover:text-[#f4f4f5] transition-colors">{email}</span>
         <ChevronDown className={`w-3 h-3 text-[#71717a] group-hover:text-[#a1a1aa] transition-all duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
 
