@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, Circle, ArrowLeft, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser';
 import { env, isSupabaseConfigured } from '@/lib/env';
 
@@ -35,6 +35,7 @@ function AuthForm() {
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -60,6 +61,9 @@ function AuthForm() {
       if (mode === 'login') {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
+        if (localStorage.getItem('wizemail-tour-seen') !== 'true') {
+          localStorage.setItem('wizemail-show-tour', 'true');
+        }
         router.push(next);
       } else if (mode === 'signup') {
         const { error: authError } = await supabase.auth.signUp({
@@ -68,6 +72,9 @@ function AuthForm() {
           options: { emailRedirectTo: redirectTo },
         });
         if (authError) throw authError;
+        if (localStorage.getItem('wizemail-tour-seen') !== 'true') {
+          localStorage.setItem('wizemail-show-tour', 'true');
+        }
         setMessage('Check your email to verify your account.');
       } else {
         const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
@@ -81,20 +88,6 @@ function AuthForm() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogle = async () => {
-    if (!configured) {
-      setError('Supabase is not configured yet. Add the env vars in .env.local.');
-      return;
-    }
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${env.appUrl}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    });
-    if (authError) setError(authError.message);
   };
 
   return (
@@ -134,7 +127,7 @@ function AuthForm() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 required
-                className="mt-1 w-full bg-[#0f0f11] border border-[#2a2a2e] rounded-lg px-3 py-2 text-sm text-[#f4f4f5] focus:outline-none focus:border-[#6366f1]"
+                className="mt-1 w-full bg-[#0f0f11] border border-[#2a2a2e] rounded-lg px-3 py-2 text-sm text-[#f4f4f5] focus:outline-none focus:border-[#6366f1] transition-colors"
               />
             </label>
 
@@ -144,13 +137,21 @@ function AuthForm() {
                 <div className="mt-1 relative">
                   <Lock className="absolute left-3 top-2.5 w-3.5 h-3.5 text-[#3a3a3e]" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     required
                     minLength={8}
-                    className="w-full bg-[#0f0f11] border border-[#2a2a2e] rounded-lg pl-9 pr-3 py-2 text-sm text-[#f4f4f5] focus:outline-none focus:border-[#6366f1]"
+                    className="w-full bg-[#0f0f11] border border-[#2a2a2e] rounded-lg pl-9 pr-9 py-2 text-sm text-[#f4f4f5] focus:outline-none focus:border-[#6366f1] transition-colors"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2.5 text-[#3a3a3e] hover:text-[#71717a] transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
               </label>
             )}
@@ -168,29 +169,11 @@ function AuthForm() {
             </button>
           </form>
 
-          {mode !== 'reset' && (
-            <>
-              <div className="flex items-center gap-3 my-4">
-                <div className="h-px flex-1 bg-[#2a2a2e]" />
-                <span className="text-[10px] text-[#3a3a3e] uppercase tracking-wider">or</span>
-                <div className="h-px flex-1 bg-[#2a2a2e]" />
-              </div>
-
-              <button
-                onClick={handleGoogle}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#222226] border border-[#2a2a2e] px-3 py-2 text-sm text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors"
-              >
-                <Circle className="w-4 h-4" />
-                Continue with Google
-              </button>
-            </>
-          )}
-
           <div className="mt-5 flex items-center justify-between text-xs">
-            <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="text-[#818cf8] hover:text-[#a5b4fc]">
-              {mode === 'login' ? 'Create account' : 'Have an account?'}
+            <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="text-[#818cf8] hover:text-[#a5b4fc] transition-colors">
+              {mode === 'login' ? 'Create account' : mode === 'signup' ? 'Have an account? Sign in' : ''}
             </button>
-            <button onClick={() => setMode(mode === 'reset' ? 'login' : 'reset')} className="text-[#71717a] hover:text-[#a1a1aa]">
+            <button onClick={() => setMode(mode === 'reset' ? 'login' : 'reset')} className="text-[#71717a] hover:text-[#a1a1aa] transition-colors">
               {mode === 'reset' ? 'Back to sign in' : 'Forgot password?'}
             </button>
           </div>

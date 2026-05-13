@@ -214,11 +214,15 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ field, type, content }),
         });
-        const { text } = await res.json();
-        onUpdate({ ...content, [updateKey]: text });
-        toast.success('Generated content');
+        const data = await res.json();
+        if (!res.ok || !data.text) {
+          toast.error(data.error ?? 'AI generation failed — check your API key');
+          return;
+        }
+        onUpdate({ ...content, [updateKey]: data.text });
+        toast.success('Generated');
       } catch (err) {
-        toast.error('Failed to generate');
+        toast.error('AI generation failed — network error');
       } finally {
         setLoading(false);
       }
@@ -478,6 +482,97 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
             <ColorField label="Text color" value={content.buttonTextColor} onChange={u('buttonTextColor')} />
           </Group>
         </>
+      )}
+
+      {type === 'header' && (
+        <>
+          <Group title="Brand">
+            <TextField label="Logo text" value={content.logoText} onChange={u('logoText')} placeholder="Your Brand" />
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+          </Group>
+        </>
+      )}
+
+      {type === 'footer' && (
+        <>
+          <Group title="Company">
+            <TextField label="Company name" value={content.companyName} onChange={u('companyName')} placeholder="Your Company" />
+            <TextField label="Address" value={content.companyAddress} onChange={u('companyAddress')} multiline placeholder="123 Main St, City, Country" />
+            <TextField label="Unsubscribe URL" value={content.unsubscribeUrl} onChange={u('unsubscribeUrl')} placeholder="https://…/unsubscribe" />
+          </Group>
+          <Group title="Colors">
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+          </Group>
+        </>
+      )}
+
+      {type === 'button-row' && (
+        <>
+          <Group title="Button">
+            <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} placeholder="Click here" />
+            <TextField label="Button URL" value={content.buttonUrl} onChange={u('buttonUrl')} placeholder="https://…" />
+          </Group>
+          <Group title="Colors">
+            <ColorField label="Button color" value={content.buttonColor} onChange={u('buttonColor')} />
+            <ColorField label="Text color" value={content.buttonTextColor} onChange={u('buttonTextColor')} />
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+          </Group>
+          <Group title="Align">
+            <div className="flex gap-1">
+              {(['left', 'center', 'right'] as const).map((align) => (
+                <button
+                  key={align}
+                  onClick={() => onUpdate({ buttonAlign: align })}
+                  className={`flex-1 py-1 rounded text-[10px] capitalize transition-colors ${
+                    (content.buttonAlign ?? 'center') === align
+                      ? 'bg-[#6366f1] text-white'
+                      : 'bg-[#0f0f11] text-[#71717a] hover:text-[#a1a1aa] border border-[#2a2a2e]'
+                  }`}
+                >
+                  {align}
+                </button>
+              ))}
+            </div>
+          </Group>
+        </>
+      )}
+
+      {type === 'divider' && (
+        <Group title="Colors">
+          <ColorField label="Divider color" value={content.dividerColor} onChange={u('dividerColor')} />
+          <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+        </Group>
+      )}
+
+      {type === 'spacer' && (
+        <Group title="Size">
+          <NumberField label="Height (px)" value={content.spacerHeight} onChange={u('spacerHeight')} min={4} max={200} />
+          <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+        </Group>
+      )}
+
+      {type === 'html' && (
+        <Group title="HTML">
+          <div className="rounded-md overflow-hidden border border-[#2a2a2e]">
+            <MonacoEditor
+              height={220}
+              language="html"
+              theme="vs-dark"
+              value={content.customHtml ?? ''}
+              onChange={(v) => onUpdate({ ...content, customHtml: v ?? '' })}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 11,
+                lineNumbers: 'off',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                padding: { top: 8, bottom: 8 },
+              }}
+            />
+          </div>
+        </Group>
       )}
 
       {/* ── Typography controls ── */}
