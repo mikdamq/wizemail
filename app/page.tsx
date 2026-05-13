@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Mail, FileCode, Upload, Layout, Zap, Layers, BookOpen } from 'lucide-react';
 import { ImportHtmlModal } from '@/components/builder/ImportHtmlModal';
+import { AccountMenu } from '@/components/auth/AccountMenu';
 
 export default function DashboardPage() {
   const [importOpen, setImportOpen] = useState(false);
@@ -16,7 +17,7 @@ export default function DashboardPage() {
           </div>
           <span className="font-semibold text-[#f4f4f5] tracking-tight">Wizemail</span>
         </div>
-        <span className="text-xs text-[#71717a]">HTML Email Builder</span>
+        <AccountMenu />
       </header>
 
       <div className="flex flex-col items-center justify-center flex-1 px-6 py-16">

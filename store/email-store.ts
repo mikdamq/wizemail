@@ -5,6 +5,7 @@ import { arrayMove } from '@dnd-kit/sortable';
 import type { EmailRow, EmailColumn, SectionType, SectionContent, EditorMode, DeviceMode, ThemeMode, ClientMode, EmailDetails, SavedDesign, BrandKit } from '@/lib/types';
 import { getDefaultContent } from '@/lib/sections';
 import { assembleEmailHTML, sectionsToRows } from '@/lib/email-utils';
+import { hexToToken, COLOR_CONTENT_KEYS } from '@/lib/brand-tokens';
 import { renameDesign as renameDesignInStorage } from '@/lib/storage';
 import { countVariableUsage } from '@/lib/variable-utils';
 import type { EmailTemplate } from '@/lib/templates';
@@ -57,7 +58,7 @@ interface EmailStore {
   removeRow: (rowId: string) => void;
   duplicateRow: (rowId: string) => void;
   reorderRows: (oldIndex: number, newIndex: number) => void;
-  updateRowSpacing: (rowId: string, spacing: Partial<Pick<EmailRow, 'columnGap' | 'outerPaddingX' | 'outerPaddingY'>>) => void;
+  updateRowSpacing: (rowId: string, spacing: Partial<Pick<EmailRow, 'columnGap' | 'outerPaddingX' | 'outerPaddingY' | 'outerPaddingTop' | 'outerPaddingRight' | 'outerPaddingBottom' | 'outerPaddingLeft'>>) => void;
   insertSectionTemplate: (template: SectionTemplate, afterRowId?: string) => void;
 
   // Column actions
@@ -73,6 +74,7 @@ interface EmailStore {
 
   // Brand kit
   updateBrandKit: (kit: Partial<BrandKit>) => void;
+  applyBrandKitToAll: () => void;
 
   // Other actions
   updateEmailDetails: (details: Partial<EmailDetails>) => void;
@@ -104,15 +106,10 @@ function makeRow(type: SectionType): EmailRow {
   return { id: generateId(), columns: [makeColumn(type)] };
 }
 
-// Apply brand kit colors/logo to newly-created section content
+// Apply brand kit logo to newly-created section content (colors now use token defaults)
 function applyBrandKit(content: SectionContent, kit: BrandKit): SectionContent {
   const result = { ...content };
   if (kit.logoText && result.logoText !== undefined) result.logoText = kit.logoText;
-  if (kit.primaryColor) {
-    if (result.buttonColor !== undefined) result.buttonColor = kit.primaryColor;
-  }
-  if (kit.backgroundColor && result.backgroundColor === '#ffffff') result.backgroundColor = kit.backgroundColor;
-  if (kit.textColor && result.textColor === '#111111') result.textColor = kit.textColor;
   return result;
 }
 
@@ -127,8 +124,8 @@ function pushHistory(past: EmailRow[][], rows: EmailRow[]): EmailRow[][] {
 }
 
 // Update variable usage counts based on current HTML content
-function updateVariableUsage(rows: EmailRow[], variables: Record<string, string>): Record<string, number> {
-  const html = assembleEmailHTML(rows, 'light', '', variables);
+function updateVariableUsage(rows: EmailRow[], variables: Record<string, string>, brandKit?: BrandKit): Record<string, number> {
+  const html = assembleEmailHTML(rows, 'light', '', variables, brandKit);
   return countVariableUsage(html);
 }
 
@@ -429,6 +426,33 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
   updateBrandKit: (kit) =>
     set((state) => ({ brandKit: { ...state.brandKit, ...kit } })),
 
+  applyBrandKitToAll: () =>
+    set((state) => {
+      const kit = state.brandKit;
+      const newRows = state.rows.map((row) => ({
+        ...row,
+        columns: row.columns.map((col) => {
+          const newContent = { ...col.content } as SectionContent;
+          for (const key of COLOR_CONTENT_KEYS) {
+            const currentValue = (newContent as Record<string, unknown>)[key];
+            if (typeof currentValue === 'string' && currentValue.startsWith('#')) {
+              const token = hexToToken(currentValue, kit);
+              if (token) {
+                (newContent as Record<string, unknown>)[key] = token;
+              }
+            }
+          }
+          return { ...col, content: newContent };
+        }),
+      }));
+      return {
+        rows: newRows,
+        past: pushHistory(state.past, state.rows),
+        future: [],
+        hasUnsavedChanges: !!state.currentDesignId,
+      };
+    }),
+
   // ── Other ─────────────────────────────────────────────────────────────────
   updateEmailDetails: (details) =>
     set((state) => ({
@@ -437,8 +461,8 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
     })),
 
   setMode: (mode) => {
-    const { rows, theme, emailDetails } = get();
-    const assembled = assembleEmailHTML(rows, theme, emailDetails.previewText);
+    const { rows, theme, emailDetails, brandKit } = get();
+    const assembled = assembleEmailHTML(rows, theme, emailDetails.previewText, undefined, brandKit);
     set({ mode, htmlCode: assembled });
   },
 
@@ -460,7 +484,7 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
       const newVariables = { ...state.variables, [key]: value };
       return {
         variables: newVariables,
-        variableUsage: updateVariableUsage(state.rows, newVariables),
+        variableUsage: updateVariableUsage(state.rows, newVariables, state.brandKit),
         hasUnsavedChanges: !!state.currentDesignId,
       };
     }),
@@ -471,7 +495,7 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
       delete newVariables[key];
       return {
         variables: newVariables,
-        variableUsage: updateVariableUsage(state.rows, newVariables),
+        variableUsage: updateVariableUsage(state.rows, newVariables, state.brandKit),
         hasUnsavedChanges: !!state.currentDesignId,
       };
     }),
@@ -527,7 +551,7 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
   },
 
   getAssembledHTML: () => {
-    const { rows, theme, emailDetails } = get();
-    return assembleEmailHTML(rows, theme, emailDetails.previewText);
+    const { rows, theme, emailDetails, brandKit } = get();
+    return assembleEmailHTML(rows, theme, emailDetails.previewText, undefined, brandKit);
   },
 }));

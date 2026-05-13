@@ -1,5 +1,5 @@
 import { renderRow } from './sections';
-import type { EmailRow, ThemeMode, SectionType, SectionContent, ClientMode } from './types';
+import type { EmailRow, ThemeMode, SectionType, SectionContent, ClientMode, BrandKit } from './types';
 
 function uid(): string {
   return Math.random().toString(36).slice(2, 9);
@@ -14,11 +14,14 @@ export function sectionsToRows(sections: SectionLike[]): EmailRow[] {
   }));
 }
 
-export function assembleEmailHTML(rows: EmailRow[], theme: ThemeMode = 'light', previewText?: string, variables?: Record<string, string>): string {
+export function assembleEmailHTML(rows: EmailRow[], theme: ThemeMode = 'light', previewText?: string, variables?: Record<string, string>, brandKit?: BrandKit): string {
   const isDark = theme === 'dark';
   const bodyBg = isDark ? '#0f172a' : '#f1f5f9';
+  const rtl = brandKit?.direction === 'rtl';
+  const htmlDir = rtl ? ' dir="rtl" lang="ar"' : ' lang="en"';
+  const bodyDir = rtl ? ' dir="rtl"' : '';
 
-  let rowsHTML = rows.map((r) => renderRow(r, isDark)).join('\n');
+  let rowsHTML = rows.map((r) => renderRow(r, isDark, brandKit)).join('\n');
   if (variables && Object.keys(variables).length > 0) {
     rowsHTML = applyVariables(rowsHTML, variables);
   }
@@ -28,7 +31,7 @@ export function assembleEmailHTML(rows: EmailRow[], theme: ThemeMode = 'light', 
     : '';
 
   return `<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html${htmlDir} xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,7 +60,7 @@ export function assembleEmailHTML(rows: EmailRow[], theme: ThemeMode = 'light', 
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:${bodyBg};">${preheader}
+<body${bodyDir} style="margin:0;padding:0;background-color:${bodyBg};">${preheader}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${bodyBg};">
     <tr>
       <td>
@@ -83,13 +86,16 @@ ${rowsHTML}
 </html>`;
 }
 
-export function assembleCleanHTML(rows: EmailRow[], theme: ThemeMode = 'light'): string {
+export function assembleCleanHTML(rows: EmailRow[], theme: ThemeMode = 'light', brandKit?: BrandKit): string {
   const isDark = theme === 'dark';
   const bodyBg = isDark ? '#0f172a' : '#f1f5f9';
-  const rowsHTML = rows.map((r) => renderRow(r, isDark)).join('\n');
+  const rtl = brandKit?.direction === 'rtl';
+  const htmlDir = rtl ? ' dir="rtl" lang="ar"' : ' lang="en"';
+  const bodyDir = rtl ? ' dir="rtl"' : '';
+  const rowsHTML = rows.map((r) => renderRow(r, isDark, brandKit)).join('\n');
 
   return `<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<html${htmlDir} xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -103,7 +109,7 @@ export function assembleCleanHTML(rows: EmailRow[], theme: ThemeMode = 'light'):
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:${bodyBg};">
+<body${bodyDir} style="margin:0;padding:0;background-color:${bodyBg};">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${bodyBg};">
     <tr><td>${rowsHTML}</td></tr>
   </table>
@@ -150,7 +156,7 @@ export async function downloadInlinedHTML(html: string, filename = 'email-inline
   downloadHTML(inlined, filename);
 }
 
-export async function exportAsSVG(rows: EmailRow[], theme: ThemeMode = 'light'): Promise<void> {
+export async function exportAsSVG(rows: EmailRow[], theme: ThemeMode = 'light', brandKit?: BrandKit): Promise<void> {
   const { toSvg } = await import('html-to-image');
 
   const container = document.createElement('div');
@@ -159,7 +165,7 @@ export async function exportAsSVG(rows: EmailRow[], theme: ThemeMode = 'light'):
 
   const isDark = theme === 'dark';
   const bodyBg = isDark ? '#0f172a' : '#f1f5f9';
-  const rowsHTML = rows.map((r) => renderRow(r, isDark)).join('\n');
+  const rowsHTML = rows.map((r) => renderRow(r, isDark, brandKit)).join('\n');
 
   container.innerHTML = `
     <div style="width:600px;background-color:${bodyBg};margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">

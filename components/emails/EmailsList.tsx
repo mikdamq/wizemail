@@ -30,7 +30,7 @@ function DesignPreview({ design }: { design: SavedDesign }) {
   useEffect(() => {
     const frame = iframeRef.current;
     if (!frame) return;
-    const html = assembleCleanHTML(design.rows, design.theme);
+    const html = assembleCleanHTML(design.rows, design.theme, design.brandKit);
     const doc = frame.contentDocument;
     if (!doc) return;
     doc.open();

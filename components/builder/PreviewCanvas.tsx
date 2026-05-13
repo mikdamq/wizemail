@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import { LayoutTemplate } from 'lucide-react';
 import { useEmailStore } from '@/store/email-store';
 import { ClientFrame } from '@/components/preview/ClientFrame';
 import { applyVariables } from '@/lib/email-utils';
@@ -69,21 +70,36 @@ export function PreviewCanvas() {
           <span className="text-[10px] text-[#71717a] font-mono bg-[#161618] px-2 py-0.5 rounded border border-[#2a2a2e]">{width}px</span>
         </div>
 
-        <div className="shadow-2xl shadow-black/50">
-          <ClientFrame>
-            <iframe
-              ref={iframeRef}
-              title="Email Preview"
-              sandbox="allow-same-origin allow-scripts"
-              style={{
-                width: '100%',
-                display: 'block',
-                border: 'none',
-                minHeight: 200,
-              }}
-            />
-          </ClientFrame>
-        </div>
+        {rows.length === 0 ? (
+          <div
+            className="rounded-xl border-2 border-dashed border-[#2a2a2e] flex flex-col items-center justify-center gap-3 py-24"
+            style={{ background: theme === 'dark' ? '#0f0f11' : '#ffffff' }}
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#222226] flex items-center justify-center">
+              <LayoutTemplate className="w-5 h-5 text-[#52525b]" strokeWidth={1.5} />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-[#71717a]">Your canvas is empty</p>
+              <p className="text-xs text-[#3a3a3e] mt-1">Add a section from the left panel to get started</p>
+            </div>
+          </div>
+        ) : (
+          <div className="shadow-2xl shadow-black/50">
+            <ClientFrame>
+              <iframe
+                ref={iframeRef}
+                title="Email Preview"
+                sandbox="allow-same-origin allow-scripts"
+                style={{
+                  width: '100%',
+                  display: 'block',
+                  border: 'none',
+                  minHeight: 200,
+                }}
+              />
+            </ClientFrame>
+          </div>
+        )}
       </div>
     </div>
   );

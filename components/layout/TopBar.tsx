@@ -192,141 +192,146 @@ export function TopBar() {
     setExporting('svg');
     setExportOpen(false);
     try {
-      await exportAsSVG(rows, theme);
+      await exportAsSVG(rows, theme, brandKit);
     } finally {
       setExporting(null);
     }
   };
 
   return (
-    <div className="h-12 bg-[#161618] border-b border-[#2a2a2e] flex items-center px-4 gap-0 flex-shrink-0 select-none">
+    <div className="h-12 bg-[#161618] border-b border-[#2a2a2e] flex items-center px-3 gap-0 flex-shrink-0 select-none">
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-1.5 pr-4 border-r border-[#2a2a2e] mr-4 hover:opacity-80 transition-opacity">
+      <Link href="/" className="flex items-center gap-1.5 pr-3 border-r border-[#2a2a2e] mr-3 hover:opacity-80 transition-opacity flex-shrink-0">
         <div className="w-6 h-6 rounded-md bg-[#6366f1] flex items-center justify-center">
           <Mail className="w-3.5 h-3.5 text-white" />
         </div>
         <span className="text-xs font-semibold text-[#f4f4f5] tracking-tight">Wizemail</span>
       </Link>
 
-      {/* Mode switcher */}
-      <div data-tour="mode-toggle" className="flex items-center gap-0.5 bg-[#0f0f11] rounded-lg p-0.5 mr-4">
-        {([
-          { id: 'visual', icon: Eye, label: 'Visual' },
-          { id: 'code', icon: Code2, label: 'Code' },
-          { id: 'split', icon: Columns2, label: 'Split' },
-        ] as { id: EditorMode; icon: typeof Eye; label: string }[]).map(({ id, icon: Icon, label }) => (
+      {/* Group 1: Mode + Undo/Redo */}
+      <div className="flex items-center gap-1 mr-1">
+        <div data-tour="mode-toggle" className="flex items-center gap-0.5 bg-[#0f0f11] rounded-lg p-0.5">
+          {([
+            { id: 'visual', icon: Eye, label: 'Visual' },
+            { id: 'code', icon: Code2, label: 'Code' },
+            { id: 'split', icon: Columns2, label: 'Split' },
+          ] as { id: EditorMode; icon: typeof Eye; label: string }[]).map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => setMode(id)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-100 ${
+                mode === id
+                  ? 'bg-[#222226] text-[#f4f4f5] shadow-sm'
+                  : 'text-[#71717a] hover:text-[#a1a1aa]'
+              }`}
+            >
+              <Icon className="w-3 h-3" />
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center">
           <button
-            key={id}
-            onClick={() => setMode(id)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-100 ${
-              mode === id
-                ? 'bg-[#222226] text-[#f4f4f5] shadow-sm'
-                : 'text-[#71717a] hover:text-[#a1a1aa]'
-            }`}
+            onClick={undo}
+            disabled={!canUndo()}
+            className="p-1.5 rounded-md transition-colors text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] disabled:opacity-25 disabled:cursor-not-allowed"
+            title="Undo (Ctrl+Z)"
           >
-            <Icon className="w-3 h-3" />
-            {label}
+            <Undo2 className="w-3.5 h-3.5" />
           </button>
-        ))}
-      </div>
-
-      {/* Undo / Redo */}
-      <div className="flex items-center gap-0.5 mr-3">
-        <button
-          onClick={undo}
-          disabled={!canUndo()}
-          className="p-1.5 rounded-md transition-colors text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] disabled:opacity-25 disabled:cursor-not-allowed"
-          title="Undo (Ctrl+Z)"
-        >
-          <Undo2 className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={redo}
-          disabled={!canRedo()}
-          className="p-1.5 rounded-md transition-colors text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] disabled:opacity-25 disabled:cursor-not-allowed"
-          title="Redo (Ctrl+Y)"
-        >
-          <Redo2 className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Device switcher */}
-      <div className="flex items-center gap-0.5 mr-3">
-        {([
-          { id: 'desktop', icon: Monitor },
-          { id: 'tablet', icon: Tablet },
-          { id: 'mobile', icon: Smartphone },
-        ] as { id: DeviceMode; icon: typeof Monitor }[]).map(({ id, icon: Icon }) => (
           <button
-            key={id}
-            onClick={() => setDevice(id)}
-            className={`p-1.5 rounded-md transition-colors ${
-              device === id ? 'text-[#f4f4f5] bg-[#222226]' : 'text-[#71717a] hover:text-[#a1a1aa]'
-            }`}
-            title={id.charAt(0).toUpperCase() + id.slice(1)}
+            onClick={redo}
+            disabled={!canRedo()}
+            className="p-1.5 rounded-md transition-colors text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] disabled:opacity-25 disabled:cursor-not-allowed"
+            title="Redo (Ctrl+Y)"
           >
-            <Icon className="w-3.5 h-3.5" />
+            <Redo2 className="w-3.5 h-3.5" />
           </button>
-        ))}
+        </div>
       </div>
-
-      {/* Theme toggle */}
-      <button
-        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-        className={`p-1.5 rounded-md transition-colors mr-2 ${
-          theme === 'dark' ? 'text-[#818cf8] bg-[#6366f1]/10' : 'text-[#71717a] hover:text-[#a1a1aa]'
-        }`}
-        title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
-      >
-        {theme === 'dark'
-          ? <Moon className="w-3.5 h-3.5" />
-          : <Sun className="w-3.5 h-3.5" />
-        }
-      </button>
 
       {/* Divider */}
-      <div className="w-px h-5 bg-[#2a2a2e] mr-3" />
+      <div className="w-px h-5 bg-[#2a2a2e] mx-2 flex-shrink-0" />
 
-      {/* Client selector */}
-      <div className="relative mr-auto">
-        <button
-          onClick={() => setClientOpen(!clientOpen)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0f0f11] border border-[#2a2a2e] text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors"
-        >
-          {CLIENT_LABELS[client]}
-          <ChevronDown className="w-3 h-3 opacity-60" />
-        </button>
-        {clientOpen && (
-          <div className="absolute top-full left-0 mt-1 w-36 bg-[#1c1c1f] border border-[#2a2a2e] rounded-lg shadow-xl z-50 py-1 overflow-hidden">
-            {(Object.keys(CLIENT_LABELS) as ClientMode[]).map((c) => (
-              <button
-                key={c}
-                onClick={() => { setClient(c); setClientOpen(false); }}
-                className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
-                  client === c
-                    ? 'text-[#818cf8] bg-[#6366f1]/10'
-                    : 'text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#222226]'
-                }`}
-              >
-                {CLIENT_LABELS[c]}
-              </button>
-            ))}
-          </div>
-        )}
+      {/* Group 2: Device + Theme + Client */}
+      <div className="flex items-center gap-1 mr-auto">
+        <div className="flex items-center gap-0.5">
+          {([
+            { id: 'desktop', icon: Monitor },
+            { id: 'tablet', icon: Tablet },
+            { id: 'mobile', icon: Smartphone },
+          ] as { id: DeviceMode; icon: typeof Monitor }[]).map(({ id, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setDevice(id)}
+              className={`p-1.5 rounded-md transition-colors ${
+                device === id ? 'text-[#f4f4f5] bg-[#222226]' : 'text-[#71717a] hover:text-[#a1a1aa]'
+              }`}
+              title={id.charAt(0).toUpperCase() + id.slice(1)}
+            >
+              <Icon className="w-3.5 h-3.5" />
+            </button>
+          ))}
+          <button
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className={`p-1.5 rounded-md transition-colors ${
+              theme === 'dark' ? 'text-[#818cf8] bg-[#6366f1]/10' : 'text-[#71717a] hover:text-[#a1a1aa]'
+            }`}
+            title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+          >
+            {theme === 'dark'
+              ? <Moon className="w-3.5 h-3.5" />
+              : <Sun className="w-3.5 h-3.5" />
+            }
+          </button>
+        </div>
+        <div className="w-px h-4 bg-[#2a2a2e] mx-1 flex-shrink-0" />
+        {/* Client selector */}
+        <div className="relative">
+          <button
+            onClick={() => setClientOpen(!clientOpen)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0f0f11] border border-[#2a2a2e] text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors"
+          >
+            {CLIENT_LABELS[client]}
+            <ChevronDown className="w-3 h-3 opacity-60" />
+          </button>
+          {clientOpen && (
+            <div className="absolute top-full left-0 mt-1 w-36 bg-[#1c1c1f] border border-[#2a2a2e] rounded-lg shadow-xl z-50 py-1 overflow-hidden">
+              {(Object.keys(CLIENT_LABELS) as ClientMode[]).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => { setClient(c); setClientOpen(false); }}
+                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                    client === c
+                      ? 'text-[#818cf8] bg-[#6366f1]/10'
+                      : 'text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#222226]'
+                  }`}
+                >
+                  {CLIENT_LABELS[c]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Variables manager */}
-      <div className="relative mr-2">
-        <button
-          data-tour="variables"
-          onClick={() => { setVariablesOpen(!variablesOpen); setExportOpen(false); setClientOpen(false); }}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
-            variablesOpen || Object.keys(variables).length > 0
-              ? 'text-[#818cf8] bg-[#6366f1]/10'
-              : 'text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226]'
-          }`}
-          title="Merge variables"
-        >
+      {/* Divider */}
+      <div className="w-px h-5 bg-[#2a2a2e] mx-2 flex-shrink-0" />
+
+      {/* Group 3: Variables + Import */}
+      <div className="flex items-center gap-0.5 mr-1">
+        {/* Variables manager */}
+        <div className="relative">
+          <button
+            data-tour="variables"
+            onClick={() => { setVariablesOpen(!variablesOpen); setExportOpen(false); setClientOpen(false); }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              variablesOpen || Object.keys(variables).length > 0
+                ? 'text-[#818cf8] bg-[#6366f1]/10'
+                : 'text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226]'
+            }`}
+            title="Merge variables"
+          >
           <Braces className="w-3.5 h-3.5" />
           Variables
           {Object.keys(variables).length > 0 && (
@@ -437,39 +442,46 @@ export function TopBar() {
             </div>
           </div>
         )}
+        </div>
+        <button
+          onClick={() => setImportOpen(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors"
+          title="Import HTML email"
+        >
+          <Upload className="w-3.5 h-3.5" />
+          Import
+        </button>
       </div>
 
-      {/* Import HTML button */}
-      <button
-        onClick={() => setImportOpen(true)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors mr-1"
-        title="Import HTML email"
-      >
-        <Upload className="w-3.5 h-3.5" />
-        Import
-      </button>
+      {/* Divider */}
+      <div className="w-px h-5 bg-[#2a2a2e] mx-2 flex-shrink-0" />
 
-      {/* My Emails + Templates links */}
-      <Link
-        href="/emails"
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors mr-1"
-      >
-        <BookOpen className="w-3.5 h-3.5" />
-        My Emails
-      </Link>
-      <Link
-        href="/templates"
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors mr-2"
-      >
-        <Layers className="w-3.5 h-3.5" />
-        Templates
-      </Link>
+      {/* Group 4: My Emails + Templates */}
+      <div className="hidden lg:flex items-center gap-0.5 mr-1">
+        <Link
+          href="/emails"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          My Emails
+        </Link>
+        <Link
+          href="/templates"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors"
+        >
+          <Layers className="w-3.5 h-3.5" />
+          Templates
+        </Link>
+      </div>
 
-      {/* Export actions */}
-      <div className="flex items-center gap-2">
+      {/* Divider */}
+      <div className="w-px h-5 bg-[#2a2a2e] mx-2 flex-shrink-0" />
+
+      {/* Group 5: Name / Save / Copy / Send / Export / Account */}
+      <div className="flex items-center gap-1.5">
         {/* Design name + inline rename */}
         {currentDesignName || currentDesignId ? (
-          <div className="hidden lg:flex items-center gap-1.5 max-w-[180px]">
+          <div className="hidden xl:flex items-center gap-1.5 max-w-[160px]">
             {editingName ? (
               <input
                 autoFocus
@@ -477,7 +489,7 @@ export function TopBar() {
                 onChange={(e) => setDraftName(e.target.value)}
                 onBlur={commitRename}
                 onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditingName(false); }}
-                className="text-xs bg-transparent border-b border-[#6366f1] text-[#f4f4f5] focus:outline-none w-36 py-0.5"
+                className="text-xs bg-transparent border-b border-[#6366f1] text-[#f4f4f5] focus:outline-none w-32 py-0.5"
               />
             ) : (
               <button

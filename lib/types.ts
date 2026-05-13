@@ -5,6 +5,8 @@ export interface BrandKit {
   textColor: string;
   logoText: string;
   fontFamily: string;
+  customColors?: string[];
+  direction?: 'ltr' | 'rtl';
 }
 
 export type SectionType =
@@ -24,6 +26,10 @@ export type SectionType =
   | 'list'
   | 'announcement'
   | 'product-card'
+  | 'stats'
+  | 'team'
+  | 'pricing'
+  | 'articles'
   | 'empty';
 
 export type EditorMode = 'visual' | 'code' | 'split';
@@ -116,10 +122,25 @@ export interface SectionContent {
   bodyLineHeight?: number;
   letterSpacing?: number;
 
+  // Per-section font override ('$brand' uses brandKit.fontFamily, 'system' = system font stack)
+  fontFamily?: string;
+
   // Background image (hero, cta, announcement, header sections)
   backgroundImageUrl?: string;
   backgroundImagePosition?: string;
   backgroundImageSize?: 'cover' | 'contain' | 'auto';
+
+  // Stats section
+  statItems?: Array<{ value: string; label: string }>;
+
+  // Team section
+  teamMembers?: Array<{ name: string; role: string; imageUrl?: string }>;
+
+  // Pricing section
+  pricingPlans?: Array<{ name: string; price: string; period?: string; features: string[]; buttonText?: string; buttonUrl?: string; highlight?: boolean }>;
+
+  // Articles section
+  articleItems?: Array<{ title: string; date?: string; excerpt?: string; imageUrl?: string; url?: string }>;
 }
 
 export interface EmailSection {
@@ -144,6 +165,10 @@ export interface EmailRow {
   columnGap?: number;
   outerPaddingX?: number;
   outerPaddingY?: number;
+  outerPaddingTop?: number;
+  outerPaddingRight?: number;
+  outerPaddingBottom?: number;
+  outerPaddingLeft?: number;
 }
 
 export interface EmailDetails {

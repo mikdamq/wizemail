@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { MousePointerClick, Upload, ShieldCheck, Pencil, CheckCircle2, AlertCircle, AlertTriangle, Minus, LayoutTemplate, ChevronDown, X, Plus, Sparkles, Loader2 } from 'lucide-react';
+import { MousePointerClick, Upload, ShieldCheck, Pencil, CheckCircle2, AlertCircle, AlertTriangle, Minus, LayoutTemplate, ChevronDown, X, Plus, Sparkles, Loader2, Link2, Link2Off } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEmailStore } from '@/store/email-store';
 import { runA11yChecks } from '@/lib/accessibility';
 import { runCompatibilityChecks } from '@/lib/email-utils';
+import { resolveColor } from '@/lib/brand-tokens';
 import type { SectionType, SectionContent } from '@/lib/types';
 import type { A11yCheck } from '@/lib/accessibility';
 import type { CompatibilityIssue } from '@/lib/types';
@@ -17,11 +18,61 @@ type Tab = 'edit' | 'a11y' | 'compatibility';
 
 /* ─── small field components ──────────────────────────────── */
 
+function BrandSwatches({ onSelect }: { onSelect: (token: string) => void }) {
+  const brandKit = useEmailStore((s) => s.brandKit);
+  const swatches: Array<{ token: string; color: string }> = [
+    { token: '$primary', color: brandKit.primaryColor },
+    { token: '$secondary', color: brandKit.secondaryColor },
+    { token: '$background', color: brandKit.backgroundColor },
+    { token: '$text', color: brandKit.textColor },
+    ...(brandKit.customColors ?? []).map((c, i) => ({ token: `$custom${i + 1}`, color: c })),
+  ];
+  return (
+    <div className="flex gap-0.5 flex-shrink-0">
+      {swatches.map(({ token, color }) => (
+        <button
+          key={token}
+          title={token}
+          onClick={() => onSelect(token)}
+          className="w-4 h-4 rounded-sm border border-[#2a2a2e] hover:scale-125 transition-transform flex-shrink-0"
+          style={{ backgroundColor: color }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function ColorField({ label, value, onChange }: { label: string; value?: string; onChange: (v: string) => void }) {
+  const brandKit = useEmailStore((s) => s.brandKit);
+  const isToken = typeof value === 'string' && value.startsWith('$');
+  const resolvedHex = isToken ? resolveColor(value, brandKit) : (value ?? '#ffffff');
+
+  if (isToken) {
+    return (
+      <div className="flex items-center justify-between gap-3">
+        <label className="text-[11px] text-[#71717a] flex-1">{label}</label>
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded border border-[#2a2a2e] flex-shrink-0" style={{ backgroundColor: resolvedHex }} />
+          <span className="text-[11px] font-mono bg-[#6366f1]/15 text-[#818cf8] border border-[#6366f1]/30 rounded px-1.5 py-0.5 select-none">
+            {value}
+          </span>
+          <button
+            onClick={() => onChange(resolvedHex)}
+            title="Unbind from brand token"
+            className="text-[#71717a] hover:text-[#f4f4f5] transition-colors"
+          >
+            <Link2Off className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between gap-3">
       <label className="text-[11px] text-[#71717a] flex-1">{label}</label>
       <div className="flex items-center gap-1.5">
+        <BrandSwatches onSelect={onChange} />
         <div className="w-5 h-5 rounded border border-[#2a2a2e] overflow-hidden flex-shrink-0">
           <input
             type="color"
@@ -117,6 +168,51 @@ function NumberField({ label, value, onChange, min = 0, max = 120 }: {
         placeholder="auto"
         className="w-16 text-[11px] font-mono bg-[#0f0f11] border border-[#2a2a2e] rounded px-1.5 py-0.5 text-[#a1a1aa] focus:outline-none focus:border-[#6366f1] transition-colors text-right"
       />
+    </div>
+  );
+}
+
+function FourSidedPadding({ top, right, bottom, left, linked, onToggleLink, onChange }: {
+  top: number; right: number; bottom: number; left: number;
+  linked: boolean; onToggleLink: () => void;
+  onChange: (side: 'top' | 'right' | 'bottom' | 'left', v: number) => void;
+}) {
+  const inputCls = "w-full text-[10px] font-mono bg-[#0f0f11] border border-[#2a2a2e] rounded px-1 py-0.5 text-[#a1a1aa] focus:outline-none focus:border-[#6366f1] transition-colors text-center";
+  const labelCls = "text-[9px] text-[#3a3a3e] text-center mt-0.5";
+  return (
+    <div className="space-y-1.5">
+      {/* Top */}
+      <div className="flex justify-center">
+        <div className="w-14">
+          <input type="number" min={0} max={200} value={top} onChange={(e) => onChange('top', Number(e.target.value))} className={inputCls} />
+          <p className={labelCls}>Top</p>
+        </div>
+      </div>
+      {/* Left + link + Right */}
+      <div className="flex items-center gap-1.5">
+        <div className="flex-1">
+          <input type="number" min={0} max={200} value={left} onChange={(e) => onChange('left', Number(e.target.value))} className={inputCls} />
+          <p className={labelCls}>Left</p>
+        </div>
+        <button
+          onClick={onToggleLink}
+          title={linked ? 'Unlink sides' : 'Link all sides'}
+          className={`flex-shrink-0 w-6 h-6 rounded flex items-center justify-center transition-colors ${linked ? 'bg-[#6366f1]/20 text-[#6366f1]' : 'bg-[#222226] text-[#3a3a3e] hover:text-[#71717a]'}`}
+        >
+          {linked ? <Link2 className="w-3 h-3" /> : <Link2Off className="w-3 h-3" />}
+        </button>
+        <div className="flex-1">
+          <input type="number" min={0} max={200} value={right} onChange={(e) => onChange('right', Number(e.target.value))} className={inputCls} />
+          <p className={labelCls}>Right</p>
+        </div>
+      </div>
+      {/* Bottom */}
+      <div className="flex justify-center">
+        <div className="w-14">
+          <input type="number" min={0} max={200} value={bottom} onChange={(e) => onChange('bottom', Number(e.target.value))} className={inputCls} />
+          <p className={labelCls}>Bottom</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -893,12 +989,12 @@ function CompatibilityTab() {
 export function RightSidebar() {
   const { rows, selected, updateColumnContent, updateRowSpacing, updateColumnSpacing } = useEmailStore();
   const [tab, setTab] = useState<Tab>('edit');
-  const [editSubTab, setEditSubTab] = useState<'content' | 'spacing'>('content');
+  const [sectionPadLinked, setSectionPadLinked] = useState(false);
+  const [colPadLinked, setColPadLinked] = useState(false);
+  const [rowPadLinked, setRowPadLinked] = useState(false);
 
   const selectedRow = selected ? rows.find((r) => r.id === selected.rowId) : undefined;
   const selectedColumn = selectedRow?.columns[selected?.colIdx ?? 0];
-
-  useEffect(() => { setEditSubTab('content'); }, [selected?.rowId, selected?.colIdx]);
 
   const sectionTypeLabel = selectedColumn
     ? selectedColumn.type === 'button-row' ? 'Button'
@@ -944,13 +1040,13 @@ export function RightSidebar() {
       {/* Tab content */}
       <div className="flex-1 overflow-hidden">
         {tab === 'edit' && (!selectedColumn || selectedColumn.type === 'empty') && (
-          <div className="flex flex-col items-center justify-center h-full gap-3">
+          <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
             <div className="w-9 h-9 rounded-xl bg-[#1c1c1f] border border-[#2a2a2e] flex items-center justify-center">
-              <MousePointerClick className="w-4 h-4 text-[#3a3a3e]" />
+              <MousePointerClick className="w-4 h-4 text-[#52525b]" />
             </div>
             <div className="text-center">
               <p className="text-xs font-medium text-[#71717a]">No section selected</p>
-              <p className="text-[10px] text-[#3a3a3e] mt-1 leading-relaxed">Click a section in the preview<br />or the structure panel</p>
+              <p className="text-[10px] text-[#3a3a3e] mt-1 leading-relaxed max-w-[140px]">Click any section in the canvas to edit its content and styles</p>
             </div>
           </div>
         )}
@@ -961,69 +1057,86 @@ export function RightSidebar() {
             <div className="px-3 py-2 border-b border-[#2a2a2e] flex-shrink-0 bg-[#0f0f11]">
               <p className="text-xs font-semibold text-[#f4f4f5]">{sectionTypeLabel}</p>
             </div>
-            {/* Content / Spacing sub-tabs */}
-            <div className="flex border-b border-[#2a2a2e] flex-shrink-0">
-              <button
-                onClick={() => setEditSubTab('content')}
-                className={`flex-1 py-1.5 text-[10px] font-semibold transition-colors ${editSubTab === 'content' ? 'text-[#f4f4f5] border-b-2 border-[#6366f1]' : 'text-[#71717a] hover:text-[#a1a1aa]'}`}
-              >
-                Content
-              </button>
-              <button
-                onClick={() => setEditSubTab('spacing')}
-                className={`flex-1 py-1.5 text-[10px] font-semibold transition-colors ${editSubTab === 'spacing' ? 'text-[#f4f4f5] border-b-2 border-[#6366f1]' : 'text-[#71717a] hover:text-[#a1a1aa]'}`}
-              >
-                Spacing
-              </button>
+
+            {/* Unified scrollable content + spacing */}
+            <div className="flex-1 overflow-y-auto">
+              <ControlsForType
+                type={selectedColumn.type}
+                content={selectedColumn.content}
+                onUpdate={(c) => selected && updateColumnContent(selected.rowId, selected.colIdx, c)}
+              />
+
+              {/* ── Section padding ── */}
+              {selectedColumn.type !== 'spacer' && (
+                <CollapsibleGroup title="Section Padding" defaultOpen={false}>
+                  <FourSidedPadding
+                    linked={sectionPadLinked}
+                    onToggleLink={() => setSectionPadLinked(!sectionPadLinked)}
+                    top={selectedColumn.content.sectionPaddingTop ?? 0}
+                    right={selectedColumn.content.sectionPaddingRight ?? 0}
+                    bottom={selectedColumn.content.sectionPaddingBottom ?? 0}
+                    left={selectedColumn.content.sectionPaddingLeft ?? 0}
+                    onChange={(side, v) => {
+                      if (sectionPadLinked) {
+                        selected && updateColumnContent(selected.rowId, selected.colIdx, { sectionPaddingTop: v, sectionPaddingRight: v, sectionPaddingBottom: v, sectionPaddingLeft: v });
+                      } else {
+                        const key = side === 'top' ? 'sectionPaddingTop' : side === 'right' ? 'sectionPaddingRight' : side === 'bottom' ? 'sectionPaddingBottom' : 'sectionPaddingLeft';
+                        selected && updateColumnContent(selected.rowId, selected.colIdx, { [key]: v });
+                      }
+                    }}
+                  />
+                </CollapsibleGroup>
+              )}
+
+              {/* ── Column padding (multi-col only) ── */}
+              {selectedRow && selectedRow.columns.length > 1 && (
+                <CollapsibleGroup title="Column Padding" defaultOpen={false}>
+                  <FourSidedPadding
+                    linked={colPadLinked}
+                    onToggleLink={() => setColPadLinked(!colPadLinked)}
+                    top={selectedColumn.paddingTop ?? 0}
+                    right={selectedColumn.paddingRight ?? 0}
+                    bottom={selectedColumn.paddingBottom ?? 0}
+                    left={selectedColumn.paddingLeft ?? 0}
+                    onChange={(side, v) => {
+                      if (colPadLinked) {
+                        selected && updateColumnSpacing(selected.rowId, selected.colIdx, { paddingTop: v, paddingRight: v, paddingBottom: v, paddingLeft: v });
+                      } else {
+                        const key = side === 'top' ? 'paddingTop' : side === 'right' ? 'paddingRight' : side === 'bottom' ? 'paddingBottom' : 'paddingLeft';
+                        selected && updateColumnSpacing(selected.rowId, selected.colIdx, { [key]: v });
+                      }
+                    }}
+                  />
+                </CollapsibleGroup>
+              )}
+
+              {/* ── Row outer padding ── */}
+              {selectedRow && (
+                <CollapsibleGroup title="Row Padding" defaultOpen={false}>
+                  <FourSidedPadding
+                    linked={rowPadLinked}
+                    onToggleLink={() => setRowPadLinked(!rowPadLinked)}
+                    top={selectedRow.outerPaddingTop ?? selectedRow.outerPaddingY ?? 0}
+                    right={selectedRow.outerPaddingRight ?? selectedRow.outerPaddingX ?? 0}
+                    bottom={selectedRow.outerPaddingBottom ?? selectedRow.outerPaddingY ?? 0}
+                    left={selectedRow.outerPaddingLeft ?? selectedRow.outerPaddingX ?? 0}
+                    onChange={(side, v) => {
+                      if (rowPadLinked) {
+                        selected && updateRowSpacing(selected.rowId, { outerPaddingTop: v, outerPaddingRight: v, outerPaddingBottom: v, outerPaddingLeft: v });
+                      } else {
+                        const key = side === 'top' ? 'outerPaddingTop' : side === 'right' ? 'outerPaddingRight' : side === 'bottom' ? 'outerPaddingBottom' : 'outerPaddingLeft';
+                        selected && updateRowSpacing(selected.rowId, { [key]: v });
+                      }
+                    }}
+                  />
+                  {selectedRow.columns.length > 1 && (
+                    <div className="mt-2">
+                      <NumberField label="Column gap" value={selectedRow.columnGap ?? 16} onChange={(v) => selected && updateRowSpacing(selected.rowId, { columnGap: v })} max={60} />
+                    </div>
+                  )}
+                </CollapsibleGroup>
+              )}
             </div>
-
-            {/* Content tab */}
-            {editSubTab === 'content' && (
-              <div className="flex-1 overflow-y-auto">
-                <ControlsForType
-                  type={selectedColumn.type}
-                  content={selectedColumn.content}
-                  onUpdate={(c) => selected && updateColumnContent(selected.rowId, selected.colIdx, c)}
-                />
-              </div>
-            )}
-
-            {/* Spacing tab */}
-            {editSubTab === 'spacing' && (
-              <div className="flex-1 overflow-y-auto p-3 space-y-4">
-                {/* Section padding — all non-spacer types */}
-                {selectedColumn.type !== 'spacer' && (
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-semibold text-[#71717a] uppercase tracking-wider">Section padding</p>
-                    <NumberField label="Top" value={selectedColumn.content.sectionPaddingTop} onChange={(v) => selected && updateColumnContent(selected.rowId, selected.colIdx, { sectionPaddingTop: v })} max={200} />
-                    <NumberField label="Right" value={selectedColumn.content.sectionPaddingRight} onChange={(v) => selected && updateColumnContent(selected.rowId, selected.colIdx, { sectionPaddingRight: v })} max={200} />
-                    <NumberField label="Bottom" value={selectedColumn.content.sectionPaddingBottom} onChange={(v) => selected && updateColumnContent(selected.rowId, selected.colIdx, { sectionPaddingBottom: v })} max={200} />
-                    <NumberField label="Left" value={selectedColumn.content.sectionPaddingLeft} onChange={(v) => selected && updateColumnContent(selected.rowId, selected.colIdx, { sectionPaddingLeft: v })} max={200} />
-                  </div>
-                )}
-                {/* Column padding — only for multi-col rows */}
-                {selectedRow && selectedRow.columns.length > 1 && (
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-semibold text-[#71717a] uppercase tracking-wider">Column padding</p>
-                    <NumberField label="Top" value={selectedColumn.paddingTop} onChange={(v) => selected && updateColumnSpacing(selected.rowId, selected.colIdx, { paddingTop: v })} />
-                    <NumberField label="Right" value={selectedColumn.paddingRight} onChange={(v) => selected && updateColumnSpacing(selected.rowId, selected.colIdx, { paddingRight: v })} />
-                    <NumberField label="Bottom" value={selectedColumn.paddingBottom} onChange={(v) => selected && updateColumnSpacing(selected.rowId, selected.colIdx, { paddingBottom: v })} />
-                    <NumberField label="Left" value={selectedColumn.paddingLeft} onChange={(v) => selected && updateColumnSpacing(selected.rowId, selected.colIdx, { paddingLeft: v })} />
-                  </div>
-                )}
-                {/* Row spacing */}
-                {selectedRow && (
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-semibold text-[#71717a] uppercase tracking-wider">Row spacing</p>
-                    <NumberField label="Outer X" value={selectedRow.outerPaddingX} onChange={(v) => selected && updateRowSpacing(selected.rowId, { outerPaddingX: v })} max={200} />
-                    <NumberField label="Outer Y" value={selectedRow.outerPaddingY} onChange={(v) => selected && updateRowSpacing(selected.rowId, { outerPaddingY: v })} max={200} />
-                    {selectedRow.columns.length > 1 && (
-                      <NumberField label="Col gap" value={selectedRow.columnGap} onChange={(v) => selected && updateRowSpacing(selected.rowId, { columnGap: v })} max={60} />
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
 
