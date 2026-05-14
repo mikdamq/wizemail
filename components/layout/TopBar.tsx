@@ -359,9 +359,14 @@ export function TopBar() {
             {/* Variable list */}
             <div className="max-h-48 overflow-y-auto">
               {Object.keys(variables).length === 0 ? (
-                <div className="px-3 py-4 text-center">
-                  <p className="text-xs text-[#71717a]">No variables yet</p>
-                  <p className="text-[10px] text-[#3a3a3e] mt-0.5">Add one to use merge tags in your email</p>
+                <div className="flex flex-col items-center justify-center gap-2 py-6 px-4">
+                  <div className="w-8 h-8 rounded-xl bg-[#0f0f11] border border-[#2a2a2e] flex items-center justify-center">
+                    <Braces className="w-4 h-4 text-[#52525b]" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-[#71717a]">No variables yet</p>
+                    <p className="text-[10px] text-[#3a3a3e] mt-0.5 leading-relaxed">Add one below to use merge tags in your email</p>
+                  </div>
                 </div>
               ) : (
                 Object.entries(variables).map(([key, val]) => {

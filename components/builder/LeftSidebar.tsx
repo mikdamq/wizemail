@@ -422,12 +422,19 @@ function SortableRowItem({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
 
   const isSingleCol = row.columns.length === 1;
+  const isRowSelected = selected?.rowId === row.id;
+
+  const stateClasses = isColDragActive
+    ? 'border-[#6366f1]/40 bg-[#6366f1]/5'
+    : isRowSelected
+      ? 'border-[#6366f1]/30 bg-[#6366f1]/[0.04]'
+      : 'border-[#2a2a2e] hover:border-[#3a3a3e]';
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }}
-      className={`group rounded-lg border bg-[#1c1c1f] transition-colors ${isColDragActive ? 'border-[#6366f1]/40 bg-[#6366f1]/5' : 'border-[#2a2a2e] hover:border-[#3a3a3e]'}`}
+      className={`group rounded-lg border bg-[#1c1c1f] transition-colors duration-150 ${stateClasses}`}
     >
       <div className="flex items-center gap-1.5 px-1.5 py-1.5">
         {/* Row drag handle */}
@@ -666,7 +673,7 @@ export function LeftSidebar() {
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-semibold transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-1 py-2 text-[10px] font-semibold transition-colors duration-150 ${
               activeTab === id ? 'text-[#f4f4f5] border-b-2 border-[#6366f1]' : 'text-[#71717a] hover:text-[#a1a1aa]'
             }`}
           >
@@ -719,9 +726,21 @@ export function LeftSidebar() {
           {/* Row list */}
           <div className="flex-1 overflow-y-auto p-2">
             {rows.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-24 text-center px-4">
-                <p className="text-xs text-[#71717a]">No sections yet</p>
-                <p className="text-[10px] text-[#3a3a3e] mt-1">Add a section to get started</p>
+              <div className="flex flex-col items-center justify-center h-full text-center px-4 gap-3 py-8">
+                <div className="w-8 h-8 rounded-xl bg-[#1c1c1f] border border-[#2a2a2e] flex items-center justify-center">
+                  <Layout className="w-4 h-4 text-[#52525b]" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-[#71717a]">No sections yet</p>
+                  <p className="text-[10px] text-[#3a3a3e] mt-1 leading-relaxed">Click below to add your first section</p>
+                </div>
+                <button
+                  onClick={() => setBrowserMode({ kind: 'add-row' })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/20 text-xs text-[#818cf8] hover:bg-[#6366f1]/20 transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add first section
+                </button>
               </div>
             ) : (
               <DndContext
