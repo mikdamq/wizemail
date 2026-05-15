@@ -389,8 +389,14 @@ export function TemplateGallery() {
               {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex items-center justify-center py-24 text-center">
-              <p className="text-sm text-[#3a3a3e]">No templates found for this filter.</p>
+            <div className="flex flex-col items-center justify-center py-24 text-center px-6">
+              <div className="w-16 h-16 rounded-2xl bg-[#1c1c1f] border border-[#2a2a2e] flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-[#3a3a3e]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0015.803 15.803z" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-[#71717a] mb-1">No templates in this category yet</p>
+              <p className="text-[11px] text-[#3a3a3e]">Try a different filter or browse all templates.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

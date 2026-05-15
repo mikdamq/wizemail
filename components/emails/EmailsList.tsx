@@ -278,12 +278,35 @@ export function EmailsList() {
 
   if (designs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-[#161618] border border-[#2a2a2e] flex items-center justify-center mb-4">
-          <Mail className="w-6 h-6 text-[#3a3a3e]" />
+      <div className="flex flex-col items-center justify-center py-24 text-center px-6">
+        {/* Illustration */}
+        <div className="relative mb-6">
+          <div className="w-20 h-20 rounded-3xl bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center">
+            <Mail className="w-9 h-9 text-[#6366f1]/60" />
+          </div>
+          <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#10b981]/10 border border-[#10b981]/20 flex items-center justify-center">
+            <span className="text-[#10b981] text-xs font-bold">+</span>
+          </div>
         </div>
-        <p className="text-sm font-medium text-[#71717a] mb-1">No saved designs yet</p>
-        <p className="text-xs text-[#3a3a3e]">Open the builder and click "Save as…" to save your first design.</p>
+        <h3 className="text-base font-semibold text-[#f4f4f5] mb-2">Create your first email</h3>
+        <p className="text-xs text-[#52525b] leading-relaxed max-w-[240px] mb-6">
+          Start from a template or build from scratch in the editor. Your saved designs appear here.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <a
+            href="/builder"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#6366f1] text-sm text-white font-medium hover:bg-[#818cf8] transition-colors"
+          >
+            <Mail className="w-3.5 h-3.5" />
+            Open builder
+          </a>
+          <a
+            href="/templates"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#2a2a2e] bg-[#1c1c1f] text-sm text-[#a1a1aa] font-medium hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors"
+          >
+            Browse templates
+          </a>
+        </div>
       </div>
     );
   }
