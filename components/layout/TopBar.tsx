@@ -190,7 +190,7 @@ export function TopBar() {
 
   const handleExportJSON = () => {
     const sections = rows.map((r) => ({
-      columns: r.columns.map((col) => ({ type: col.type, content: col.content })),
+      columns: r.columns.map((col) => ({ type: col.type, content: col.content, width: col.width })),
       columnGap: r.columnGap,
       outerPaddingTop: r.outerPaddingTop,
       outerPaddingBottom: r.outerPaddingBottom,
@@ -210,6 +210,11 @@ export function TopBar() {
 
   const assembledHTML = getAssembledHTML();
   const hasMjml = /<mjml[\s>]/i.test(assembledHTML);
+
+  const emailSizeKB = Math.round(new TextEncoder().encode(assembledHTML).length / 1024 * 10) / 10;
+  const sizeLevel = emailSizeKB >= 100 ? 'danger' : emailSizeKB >= 80 ? 'warn' : 'ok';
+
+  const hasBase64Images = /src="data:image\//i.test(assembledHTML);
 
   const handleDownloadInlined = async () => {
     setExporting('inline');
@@ -548,6 +553,26 @@ export function TopBar() {
             )}
           </div>
         ) : null}
+        {/* Gmail size indicator */}
+        <div
+          title={
+            sizeLevel === 'danger'
+              ? 'Gmail clips emails over 102 KB — reduce content or image sizes'
+              : sizeLevel === 'warn'
+              ? 'Approaching Gmail clip limit (102 KB)'
+              : 'Email size — Gmail clips above 102 KB'
+          }
+          className={`hidden sm:flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono font-semibold border transition-colors ${
+            sizeLevel === 'danger'
+              ? 'text-red-400 bg-red-500/10 border-red-500/20'
+              : sizeLevel === 'warn'
+              ? 'text-[#f59e0b] bg-[#f59e0b]/10 border-[#f59e0b]/20'
+              : 'text-[#52525b] bg-transparent border-transparent'
+          }`}
+        >
+          {emailSizeKB} KB
+        </div>
+
         <button
           onClick={handleSave}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs transition-colors ${
@@ -574,6 +599,20 @@ export function TopBar() {
           </button>
           {exportOpen && (
             <div className="absolute top-full right-0 mt-1 w-52 bg-[#1c1c1f] border border-[#2a2a2e] rounded-lg shadow-xl z-50 py-1 overflow-hidden">
+              {/* Size + base64 warnings */}
+              {(sizeLevel !== 'ok' || hasBase64Images) && (
+                <div className="px-3 py-2 border-b border-[#2a2a2e] space-y-1">
+                  {sizeLevel === 'danger' && (
+                    <p className="text-[10px] text-red-400 leading-snug">Email is {emailSizeKB} KB — Gmail will clip it at 102 KB.</p>
+                  )}
+                  {sizeLevel === 'warn' && (
+                    <p className="text-[10px] text-[#f59e0b] leading-snug">Email is {emailSizeKB} KB — approaching Gmail&apos;s 102 KB clip limit.</p>
+                  )}
+                  {hasBase64Images && (
+                    <p className="text-[10px] text-[#f59e0b] leading-snug">Embedded images (base64) inflate file size. Upload to a host for smaller exports.</p>
+                  )}
+                </div>
+              )}
               <button
                 onClick={handleDownloadHTML}
                 className="w-full text-left px-3 py-2 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#222226] transition-colors flex items-center gap-2"
