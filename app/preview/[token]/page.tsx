@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Mail, Lock, AlertCircle, Clock, ExternalLink } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Clock, ExternalLink, MessageSquare, Send } from 'lucide-react';
 
 interface PreviewData {
   html: string;
@@ -9,6 +9,13 @@ interface PreviewData {
   expiresAt: string;
   hasPassword: boolean;
   password: string | null;
+}
+
+interface Comment {
+  id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
 }
 
 export default function PreviewPage({ params }: { params: { token: string } }) {
@@ -20,6 +27,10 @@ export default function PreviewPage({ params }: { params: { token: string } }) {
   const [passwordError, setPasswordError] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentName, setCommentName] = useState('');
+  const [commentBody, setCommentBody] = useState('');
+  const [commentSending, setCommentSending] = useState(false);
 
   useEffect(() => {
     fetch(`/api/preview?token=${encodeURIComponent(token)}`)
@@ -42,6 +53,36 @@ export default function PreviewPage({ params }: { params: { token: string } }) {
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, []);
+
+  const loadComments = () => {
+    fetch(`/api/preview/comments?token=${encodeURIComponent(token)}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.comments) setComments(d.comments); })
+      .catch(() => undefined);
+  };
+
+  useEffect(() => {
+    if (unlocked) loadComments();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlocked]);
+
+  const handlePostComment = async () => {
+    if (!commentName.trim() || !commentBody.trim()) return;
+    setCommentSending(true);
+    try {
+      const res = await fetch('/api/preview/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, authorName: commentName, body: commentBody }),
+      });
+      if (res.ok) {
+        setCommentBody('');
+        loadComments();
+      }
+    } finally {
+      setCommentSending(false);
+    }
+  };
 
   const handleUnlock = () => {
     if (!data) return;
@@ -169,6 +210,60 @@ export default function PreviewPage({ params }: { params: { token: string } }) {
           Read-only preview · shared via{' '}
           <a href="/" className="text-[#818cf8] hover:underline">Wizemail</a>
         </p>
+
+        {/* Comments */}
+        <div className="mt-8 space-y-4">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-[#64748b]" />
+            <h2 className="text-sm font-semibold text-[#374151]">Leave feedback</h2>
+          </div>
+
+          {/* Existing comments */}
+          {comments.length > 0 && (
+            <div className="space-y-3">
+              {comments.map((c) => (
+                <div key={c.id} className="bg-white rounded-xl border border-[#e2e8f0] p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-7 h-7 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center">
+                      <span className="text-xs font-semibold text-[#6366f1]">{c.author_name[0].toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[#374151]">{c.author_name}</p>
+                      <p className="text-[10px] text-[#94a3b8]">{new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-[#4b5563] leading-relaxed">{c.body}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* New comment form */}
+          <div className="bg-white rounded-xl border border-[#e2e8f0] p-4 space-y-3">
+            <input
+              type="text"
+              value={commentName}
+              onChange={(e) => setCommentName(e.target.value)}
+              placeholder="Your name"
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm text-[#374151] placeholder-[#94a3b8] focus:outline-none focus:border-[#6366f1]/50 transition-colors"
+            />
+            <textarea
+              value={commentBody}
+              onChange={(e) => setCommentBody(e.target.value)}
+              placeholder="Share your feedback on this design…"
+              rows={3}
+              className="w-full border border-[#e2e8f0] rounded-lg px-3 py-2 text-sm text-[#374151] placeholder-[#94a3b8] focus:outline-none focus:border-[#6366f1]/50 transition-colors resize-none"
+            />
+            <button
+              onClick={handlePostComment}
+              disabled={commentSending || !commentName.trim() || !commentBody.trim()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#6366f1] text-sm text-white font-medium hover:bg-[#818cf8] transition-colors disabled:opacity-50"
+            >
+              <Send className="w-3.5 h-3.5" />
+              {commentSending ? 'Sending…' : 'Post comment'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -177,6 +177,23 @@ export interface Database {
         };
         Update: Partial<Database['public']['Tables']['app_settings']['Insert']>;
       };
+      preview_comments: {
+        Row: {
+          id: string;
+          token: string;
+          author_name: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          token: string;
+          author_name: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['preview_comments']['Insert']>;
+      };
       preview_links: {
         Row: {
           id: string;
