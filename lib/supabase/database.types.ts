@@ -177,6 +177,31 @@ export interface Database {
         };
         Update: Partial<Database['public']['Tables']['app_settings']['Insert']>;
       };
+      preview_links: {
+        Row: {
+          id: string;
+          token: string;
+          design_id: string;
+          user_id: string;
+          html: string;
+          design_name: string;
+          password: string | null;
+          expires_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          token?: string;
+          design_id: string;
+          user_id: string;
+          html: string;
+          design_name?: string;
+          password?: string | null;
+          expires_at?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['preview_links']['Insert']>;
+      };
     };
     Views: Record<string, never>;
     Functions: {

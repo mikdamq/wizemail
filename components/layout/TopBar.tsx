@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Mail, Eye, Code2, Columns2, Monitor, Tablet, Smartphone,
   Sun, Moon, Download, Copy, Check, ChevronDown, ImageIcon, Code,
-  Save, Braces, Plus, X, SendHorizonal, Pencil, Undo2, Redo2, Upload, MoreHorizontal,
+  Save, Braces, Plus, X, SendHorizonal, Pencil, Undo2, Redo2, Upload, MoreHorizontal, Share2, Link as LinkIcon, Lock,
 } from 'lucide-react';
 import { SendTestModal } from '@/components/builder/SendTestModal';
 import { trackClientEvent } from '@/lib/track-client';
@@ -90,6 +90,10 @@ export function TopBar() {
   const [newVarKey, setNewVarKey] = useState('');
   const [newVarValue, setNewVarValue] = useState('');
   const [varKeyError, setVarKeyError] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [sharePassword, setSharePassword] = useState('');
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
 
   const handleSave = () => {
     if (currentDesignId) {
@@ -246,6 +250,34 @@ export function TopBar() {
       await exportAsSVG(rows, theme, brandKit);
     } finally {
       setExporting(null);
+    }
+  };
+
+  const handleCreatePreview = async () => {
+    if (!currentDesignId) {
+      toast.error('Save the design first before sharing a preview');
+      return;
+    }
+    setShareLoading(true);
+    try {
+      const res = await fetch('/api/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          html: assembledHTML,
+          designId: currentDesignId,
+          designName: currentDesignName,
+          password: sharePassword.trim() || undefined,
+        }),
+      });
+      const data = await res.json() as { token?: string; error?: string };
+      if (!res.ok || !data.token) throw new Error(data.error ?? 'Failed to create preview');
+      const url = `${window.location.origin}/preview/${data.token}`;
+      setShareUrl(url);
+    } catch (err) {
+      toast.error('Could not create preview — ' + (err instanceof Error ? err.message : 'unknown error'));
+    } finally {
+      setShareLoading(false);
     }
   };
 
@@ -553,6 +585,16 @@ export function TopBar() {
             )}
           </div>
         ) : null}
+        {/* Share preview */}
+        <button
+          onClick={() => { setShareOpen(true); setShareUrl(null); setSharePassword(''); }}
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#2a2a2e] bg-[#1c1c1f] text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors"
+          title="Share a preview link with a client"
+        >
+          <Share2 className="w-3 h-3" />
+          Share
+        </button>
+
         {/* Gmail size indicator */}
         <div
           title={
@@ -673,6 +715,83 @@ export function TopBar() {
           html={getAssembledHTML()}
           onClose={() => setSendTestOpen(false)}
         />
+      )}
+
+      {/* Share preview modal */}
+      {shareOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShareOpen(false)}>
+          <div className="bg-[#1c1c1f] border border-[#2a2a2e] rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-4 h-4 text-[#818cf8]" />
+                <h2 className="text-sm font-semibold text-[#f4f4f5]">Share preview</h2>
+              </div>
+              <button onClick={() => setShareOpen(false)} className="p-1 rounded text-[#52525b] hover:text-[#f4f4f5] hover:bg-[#2a2a2e] transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {!shareUrl ? (
+              <>
+                <p className="text-xs text-[#71717a] leading-relaxed">Generate a public link your client can open in their browser. Expires in 7 days.</p>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-medium text-[#71717a] uppercase tracking-wider flex items-center gap-1.5">
+                    <Lock className="w-3 h-3" />
+                    Password (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={sharePassword}
+                    onChange={(e) => setSharePassword(e.target.value)}
+                    placeholder="Leave blank for no password"
+                    className="w-full bg-[#0f0f11] border border-[#2a2a2e] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] placeholder-[#3a3a3e] focus:outline-none focus:border-[#6366f1]/60 transition-colors"
+                  />
+                </div>
+                <button
+                  onClick={handleCreatePreview}
+                  disabled={shareLoading}
+                  className="w-full py-2.5 rounded-lg bg-[#6366f1] text-sm text-white font-medium hover:bg-[#818cf8] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {shareLoading ? (
+                    <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Creating link…</>
+                  ) : (
+                    <><Share2 className="w-3.5 h-3.5" />Generate link</>
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-[#10b981]">Preview link created — expires in 7 days</p>
+                <div className="flex items-center gap-2 bg-[#0f0f11] border border-[#2a2a2e] rounded-lg px-3 py-2">
+                  <LinkIcon className="w-3 h-3 text-[#52525b] flex-shrink-0" />
+                  <span className="text-xs text-[#a1a1aa] flex-1 truncate font-mono">{shareUrl}</span>
+                  <button
+                    onClick={() => { copyToClipboard(shareUrl); toast.success('Link copied'); }}
+                    className="text-[#818cf8] hover:text-[#6366f1] transition-colors flex-shrink-0"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={shareUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-2 rounded-lg border border-[#2a2a2e] text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors text-center"
+                  >
+                    Open preview
+                  </a>
+                  <button
+                    onClick={() => { setShareUrl(null); setSharePassword(''); }}
+                    className="flex-1 py-2 rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/20 text-xs text-[#818cf8] hover:bg-[#6366f1]/20 transition-colors"
+                  >
+                    New link
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Import HTML modal */}
