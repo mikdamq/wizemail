@@ -430,37 +430,42 @@ function SortableRowItem({
           <button
             ref={layoutBtnRef}
             onClick={(e) => { e.stopPropagation(); setShowLayoutPicker((v) => !v); }}
+            aria-label="Change column layout"
+            aria-expanded={showLayoutPicker}
             className="p-1 rounded text-[#3a3a3e] hover:text-[#6366f1] hover:bg-[#6366f1]/10 transition-colors"
             title="Change column layout"
           >
-            <Layout className="w-3 h-3" />
+            <Layout className="w-3 h-3" aria-hidden="true" />
           </button>
           <button
             onClick={() => {
               duplicateRow(row.id);
               toast('Row duplicated', { icon: '📋' });
             }}
+            aria-label="Duplicate row"
             className="p-1 rounded text-[#3a3a3e] hover:text-[#f4f4f5] hover:bg-[#2a2a2e] transition-colors"
             title="Duplicate row"
           >
-            <Copy className="w-3 h-3" />
+            <Copy className="w-3 h-3" aria-hidden="true" />
           </button>
           <button
             onClick={() => onSaveBlock(row)}
+            aria-label="Save row as reusable block"
             className="p-1 rounded text-[#3a3a3e] hover:text-[#818cf8] hover:bg-[#2a2a2e] transition-colors"
             title="Save as reusable block"
           >
-            <Bookmark className="w-3 h-3" />
+            <Bookmark className="w-3 h-3" aria-hidden="true" />
           </button>
           <button
             onClick={() => {
               removeRow(row.id);
               toast('Row removed', { description: 'Section deleted from email', icon: '🗑️' });
             }}
+            aria-label="Delete row"
             className="p-1 rounded text-[#3a3a3e] hover:text-red-400 hover:bg-[#2a2a2e] transition-colors"
             title="Delete row"
           >
-            <Trash2 className="w-3 h-3" />
+            <Trash2 className="w-3 h-3" aria-hidden="true" />
           </button>
         </div>
       </div>

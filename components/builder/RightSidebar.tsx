@@ -46,22 +46,24 @@ function ColorField({ label, value, onChange }: { label: string; value?: string;
   const brandKit = useEmailStore((s) => s.brandKit);
   const isToken = typeof value === 'string' && value.startsWith('$');
   const resolvedHex = isToken ? resolveColor(value, brandKit) : (value ?? '#ffffff');
+  const id = `color-${label.replace(/\s+/g, '-').toLowerCase()}`;
 
   if (isToken) {
     return (
       <div className="flex items-center justify-between gap-3">
-        <label className="text-[11px] text-[#71717a] flex-1">{label}</label>
+        <label htmlFor={id} className="text-[11px] text-[#71717a] flex-1">{label}</label>
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded border border-[#2a2a2e] flex-shrink-0" style={{ backgroundColor: resolvedHex }} />
+          <div className="w-5 h-5 rounded border border-[#2a2a2e] flex-shrink-0" style={{ backgroundColor: resolvedHex }} aria-hidden="true" />
           <span className="text-[11px] font-mono bg-[#6366f1]/15 text-[#818cf8] border border-[#6366f1]/30 rounded px-1.5 py-0.5 select-none">
             {value}
           </span>
           <button
             onClick={() => onChange(resolvedHex)}
             title="Unbind from brand token"
+            aria-label={`Unbind ${label} from brand token`}
             className="text-[#71717a] hover:text-[#f4f4f5] transition-colors"
           >
-            <Link2Off className="w-3 h-3" />
+            <Link2Off className="w-3 h-3" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -70,14 +72,16 @@ function ColorField({ label, value, onChange }: { label: string; value?: string;
 
   return (
     <div className="flex items-center justify-between gap-3">
-      <label className="text-[11px] text-[#71717a] flex-1">{label}</label>
+      <label htmlFor={id} className="text-[11px] text-[#71717a] flex-1">{label}</label>
       <div className="flex items-center gap-1.5">
         <BrandSwatches onSelect={onChange} />
         <div className="w-5 h-5 rounded border border-[#2a2a2e] overflow-hidden flex-shrink-0">
           <input
+            id={id}
             type="color"
             value={value ?? '#ffffff'}
             onChange={(e) => onChange(e.target.value)}
+            aria-label={label}
             className="w-6 h-6 -translate-x-0.5 -translate-y-0.5 cursor-pointer border-0 p-0 bg-transparent"
           />
         </div>
@@ -85,6 +89,7 @@ function ColorField({ label, value, onChange }: { label: string; value?: string;
           type="text"
           value={value ?? ''}
           onChange={(e) => onChange(e.target.value)}
+          aria-label={`${label} hex value`}
           className="w-20 text-[11px] font-mono bg-[#0f0f11] border border-[#2a2a2e] rounded px-1.5 py-0.5 text-[#a1a1aa] focus:outline-none focus:border-[#6366f1] transition-colors"
           placeholder="#000000"
         />
@@ -143,10 +148,11 @@ function CollapsibleGroup({ title, children, defaultOpen = false }: {
     <div className="border-b border-[#2a2a2e] last:border-0">
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         className="w-full flex items-center justify-between px-3 py-2 bg-[#0f0f11] hover:bg-[#111113] transition-colors"
       >
         <p className="text-[10px] font-semibold text-[#71717a] uppercase tracking-wider">{title}</p>
-        <ChevronDown className={`w-3 h-3 text-[#71717a] transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-[#71717a] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
       {open && <div className="px-3 py-3 space-y-2">{children}</div>}
     </div>
@@ -156,10 +162,12 @@ function CollapsibleGroup({ title, children, defaultOpen = false }: {
 function NumberField({ label, value, onChange, min = 0, max = 120 }: {
   label: string; value?: number; onChange: (v: number) => void; min?: number; max?: number;
 }) {
+  const id = `num-${label.replace(/\s+/g, '-').toLowerCase()}`;
   return (
     <div className="flex items-center justify-between gap-2">
-      <label className="text-[11px] text-[#71717a] flex-shrink-0">{label}</label>
+      <label htmlFor={id} className="text-[11px] text-[#71717a] flex-shrink-0">{label}</label>
       <input
+        id={id}
         type="number"
         min={min}
         max={max}
@@ -1226,32 +1234,38 @@ export function RightSidebar() {
     <div data-tour="inspector" className="w-64 flex-shrink-0 bg-[#161618] flex flex-col overflow-hidden">
       {/* Tab bar */}
       <div className="px-2 py-2 border-b border-[#2a2a2e] flex-shrink-0">
-        <div className="flex items-center gap-0.5 bg-[#0f0f11] rounded-lg p-0.5">
+        <div role="tablist" aria-label="Inspector panels" className="flex items-center gap-0.5 bg-[#0f0f11] rounded-lg p-0.5">
           <button
+            role="tab"
+            aria-selected={tab === 'edit'}
             onClick={() => setTab('edit')}
             className={`flex items-center gap-1.5 flex-1 justify-center py-1 rounded-md text-xs font-medium transition-all duration-100 ${
               tab === 'edit' ? 'bg-[#222226] text-[#f4f4f5] shadow-sm' : 'text-[#71717a] hover:text-[#a1a1aa]'
             }`}
           >
-            <Pencil className="w-3 h-3" />
+            <Pencil className="w-3 h-3" aria-hidden="true" />
             Edit
           </button>
           <button
+            role="tab"
+            aria-selected={tab === 'a11y'}
             onClick={() => setTab('a11y')}
             className={`flex items-center gap-1.5 flex-1 justify-center py-1 rounded-md text-xs font-medium transition-all duration-100 ${
               tab === 'a11y' ? 'bg-[#222226] text-[#f4f4f5] shadow-sm' : 'text-[#71717a] hover:text-[#a1a1aa]'
             }`}
           >
-            <ShieldCheck className="w-3 h-3" />
+            <ShieldCheck className="w-3 h-3" aria-hidden="true" />
             A11y
           </button>
           <button
+            role="tab"
+            aria-selected={tab === 'compatibility'}
             onClick={() => setTab('compatibility')}
             className={`flex items-center gap-1.5 flex-1 justify-center py-1 rounded-md text-xs font-medium transition-all duration-100 ${
               tab === 'compatibility' ? 'bg-[#222226] text-[#f4f4f5] shadow-sm' : 'text-[#71717a] hover:text-[#a1a1aa]'
             }`}
           >
-            <LayoutTemplate className="w-3 h-3" />
+            <LayoutTemplate className="w-3 h-3" aria-hidden="true" />
             Compat
           </button>
         </div>
