@@ -124,6 +124,21 @@ function pushHistory(past: EmailRow[][], rows: EmailRow[]): EmailRow[][] {
   return [...past, rows].slice(-HISTORY_LIMIT);
 }
 
+// Debounce content-edit history pushes so rapid typing doesn't flood the undo stack
+let lastContentHistoryTime = 0;
+let lastContentHistoryRows: EmailRow[] | null = null;
+function pushContentHistory(past: EmailRow[][], rows: EmailRow[]): EmailRow[][] {
+  const now = Date.now();
+  if (now - lastContentHistoryTime < 600 && lastContentHistoryRows !== null) {
+    // Replace the last entry with the pre-edit state (already recorded), don't add a new one
+    lastContentHistoryTime = now;
+    return past;
+  }
+  lastContentHistoryTime = now;
+  lastContentHistoryRows = rows;
+  return pushHistory(past, rows);
+}
+
 // Update variable usage counts based on current HTML content
 function updateVariableUsage(rows: EmailRow[], variables: Record<string, string>, brandKit?: BrandKit): Record<string, number> {
   const html = assembleEmailHTML(rows, 'light', '', variables, brandKit);
@@ -285,7 +300,7 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
               ),
             }
       ),
-      past: pushHistory(state.past, state.rows),
+      past: pushContentHistory(state.past, state.rows),
       future: [],
       hasUnsavedChanges: !!state.currentDesignId,
     })),
