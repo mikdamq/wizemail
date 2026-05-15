@@ -53,16 +53,19 @@ jobs:
 
       - name: Package standalone artifact
         run: |
+          # Copy public assets and static files into standalone
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
-          cp server.js .next/standalone/server.js
+          # Remove node_modules from standalone — cPanel manages these via symlink
+          rm -rf .next/standalone/node_modules
+          rm -rf .next/standalone/.next/server/chunks/node_modules
 
-      - name: Upload build artifact via rsync
+      - name: Upload standalone folder via rsync
         uses: burnett01/rsync-deployments@7.0.1
         with:
-          switches: -avz --delete
+          switches: -avz --delete --exclude=node_modules
           path: .next/standalone/
-          remote_path: ${{ secrets.CPANEL_DEPLOY_PATH }}
+          remote_path: ${{ secrets.CPANEL_DEPLOY_PATH }}/standalone/
           remote_host: ${{ secrets.CPANEL_SSH_HOST }}
           remote_port: ${{ secrets.CPANEL_SSH_PORT }}
           remote_user: ${{ secrets.CPANEL_SSH_USER }}
