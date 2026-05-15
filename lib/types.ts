@@ -9,6 +9,13 @@ export interface BrandKit {
   direction?: 'ltr' | 'rtl';
   /** Mutable display labels per token. Token IDs ($primary etc.) never change. */
   labels?: Partial<Record<string, string>>;
+  /** Logo images: base64 data URLs or hosted URLs */
+  logoLight?: string;
+  logoDark?: string;
+  /** Font applied to the logo text in email header */
+  logoFontFamily?: string;
+  /** Custom fonts added by the user: Google Font names or base64 data URLs */
+  customFonts?: Array<{ name: string; url: string; type: 'google' | 'upload' }>;
 }
 
 export type SectionType =

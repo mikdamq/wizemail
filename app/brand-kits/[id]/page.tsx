@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Check, Loader2, Plus, Trash2, Pencil, X, Type } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, Plus, Trash2, Pencil, X, Type, Upload, Search, Sun, Moon } from 'lucide-react';
 import { AppShell } from '@/components/layout/AppShell';
 import { listCloudBrandKits, saveCloudBrandKit, deleteCloudBrandKit } from '@/lib/cloud-brand-kits';
 import type { SavedBrandKit } from '@/lib/cloud-brand-kits';
@@ -12,7 +12,7 @@ import { getTokenLabel } from '@/lib/brand-tokens';
 const CORE_TOKENS = ['$primary', '$secondary', '$background', '$text'] as const;
 const CUSTOM_TOKENS = ['$custom1', '$custom2', '$custom3', '$custom4', '$custom5', '$custom6', '$custom7', '$custom8'] as const;
 
-const FONT_OPTIONS = [
+const SYSTEM_FONT_OPTIONS = [
   { value: 'system', label: 'System default' },
   { value: 'Arial, Helvetica, sans-serif', label: 'Arial' },
   { value: 'Georgia, serif', label: 'Georgia' },
@@ -20,6 +20,13 @@ const FONT_OPTIONS = [
   { value: 'Verdana, Geneva, sans-serif', label: 'Verdana' },
   { value: 'Trebuchet MS, sans-serif', label: 'Trebuchet MS' },
   { value: "'Courier New', Courier, monospace", label: 'Courier New' },
+];
+
+const POPULAR_GOOGLE_FONTS = [
+  'Inter', 'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Raleway', 'Poppins',
+  'Source Sans 3', 'Nunito', 'Playfair Display', 'Merriweather', 'PT Serif',
+  'Oswald', 'Ubuntu', 'Noto Sans', 'Noto Sans Arabic', 'Cairo', 'Tajawal',
+  'Almarai', 'IBM Plex Sans', 'DM Sans', 'Space Grotesk',
 ];
 
 function getTokenValue(token: string, kit: BrandKit): string {
@@ -65,9 +72,15 @@ export default function BrandKitEditorPage({ params }: { params: Promise<{ id: s
   const [saved, setSaved] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [fontSearch, setFontSearch] = useState('');
+  const [fontSearchResults, setFontSearchResults] = useState<string[]>([]);
+  const [showFontSearch, setShowFontSearch] = useState(false);
 
   const kitNameInputRef = useRef<HTMLInputElement>(null);
   const labelInputRef = useRef<HTMLInputElement>(null);
+  const logoLightRef = useRef<HTMLInputElement>(null);
+  const logoDarkRef = useRef<HTMLInputElement>(null);
+  const fontUploadRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     listCloudBrandKits().then((list) => {
@@ -119,6 +132,50 @@ export default function BrandKitEditorPage({ params }: { params: Promise<{ id: s
     if (count >= 8) return;
     const colors = [...(kit.customColors ?? []), '#cccccc'];
     markDirty({ ...kit, customColors: colors });
+  };
+
+  const handleLogoUpload = (file: File, variant: 'light' | 'dark') => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const url = e.target?.result as string;
+      markDirty({ ...kit!, [variant === 'light' ? 'logoLight' : 'logoDark']: url });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFontUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const url = e.target?.result as string;
+      const name = file.name.replace(/\.[^/.]+$/, '');
+      const existing = kit?.customFonts ?? [];
+      if (existing.find((f) => f.name === name)) return;
+      markDirty({ ...kit!, customFonts: [...existing, { name, url, type: 'upload' as const }] });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const addGoogleFont = (name: string) => {
+    if (!kit) return;
+    const existing = kit.customFonts ?? [];
+    if (existing.find((f) => f.name === name)) return;
+    const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
+    markDirty({ ...kit, customFonts: [...existing, { name, url, type: 'google' as const }] });
+    setShowFontSearch(false);
+    setFontSearch('');
+  };
+
+  const removeCustomFont = (name: string) => {
+    if (!kit) return;
+    const fonts = (kit.customFonts ?? []).filter((f) => f.name !== name);
+    markDirty({ ...kit, customFonts: fonts });
+  };
+
+  const handleFontSearchChange = (q: string) => {
+    setFontSearch(q);
+    if (!q.trim()) { setFontSearchResults([]); return; }
+    const lower = q.toLowerCase();
+    setFontSearchResults(POPULAR_GOOGLE_FONTS.filter((f) => f.toLowerCase().includes(lower)).slice(0, 8));
   };
 
   const removeCustomColor = (idx: number) => {
@@ -348,14 +405,9 @@ export default function BrandKitEditorPage({ params }: { params: Promise<{ id: s
 
           {/* ── Typography section ── */}
           <Section title="Typography" subtitle="Set the brand font used in email sections.">
-            <div
-              className="rounded-xl p-4 flex items-center gap-4"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-            >
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: 'var(--overlay)' }}
-              >
+            {/* Brand font selector */}
+            <div className="rounded-xl p-4 flex items-center gap-4 mb-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--overlay)' }}>
                 <Type className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
               </div>
               <div className="flex-1 min-w-0">
@@ -364,26 +416,153 @@ export default function BrandKitEditorPage({ params }: { params: Promise<{ id: s
                   value={kit.fontFamily ?? 'system'}
                   onChange={(e) => markDirty({ ...kit, fontFamily: e.target.value })}
                   className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{
-                    background: 'var(--elevated)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text)',
-                  }}
+                  style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)' }}
                 >
-                  {FONT_OPTIONS.map((f) => (
+                  {SYSTEM_FONT_OPTIONS.map((f) => (
                     <option key={f.value} value={f.value}>{f.label}</option>
+                  ))}
+                  {(kit.customFonts ?? []).map((f) => (
+                    <option key={f.name} value={f.name}>{f.name}</option>
                   ))}
                 </select>
               </div>
             </div>
+
+            {/* Custom fonts list */}
+            {(kit.customFonts ?? []).length > 0 && (
+              <div className="space-y-1.5 mb-3">
+                <p className="text-[11px] font-medium px-1" style={{ color: 'var(--text-subtle)' }}>Custom fonts</p>
+                {(kit.customFonts ?? []).map((f) => (
+                  <div key={f.name} className="flex items-center gap-3 px-3 py-2 rounded-xl group" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                    <Type className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                    <span className="flex-1 text-xs" style={{ color: 'var(--text)' }}>{f.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--overlay)', color: 'var(--text-subtle)' }}>
+                      {f.type === 'google' ? 'Google' : 'Uploaded'}
+                    </span>
+                    <button
+                      onClick={() => removeCustomFont(f.name)}
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all"
+                      style={{ color: 'var(--text-subtle)' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-subtle)'; }}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add font actions */}
+            <div className="flex gap-2">
+              {/* Google Fonts search */}
+              <div className="relative flex-1">
+                <button
+                  onClick={() => setShowFontSearch((s) => !s)}
+                  className="flex items-center gap-1.5 text-xs transition-colors w-full px-3 py-2 rounded-lg border"
+                  style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--accent)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; }}
+                  onMouseLeave={(e) => { if (!showFontSearch) { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; } }}
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  Google Fonts
+                </button>
+                {showFontSearch && (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 rounded-xl border shadow-xl overflow-hidden" style={{ background: 'var(--elevated)', borderColor: 'var(--border)', zIndex: 20 }}>
+                    <div className="p-2 border-b" style={{ borderColor: 'var(--border)' }}>
+                      <input
+                        autoFocus
+                        value={fontSearch}
+                        onChange={(e) => handleFontSearchChange(e.target.value)}
+                        placeholder="Search Google Fonts…"
+                        className="w-full text-xs rounded-lg px-2.5 py-1.5 outline-none"
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {(fontSearch ? fontSearchResults : POPULAR_GOOGLE_FONTS.slice(0, 10)).map((name) => (
+                        <button
+                          key={name}
+                          onClick={() => addGoogleFont(name)}
+                          className="w-full text-left px-3 py-2 text-xs transition-colors"
+                          style={{ color: 'var(--text-muted)' }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--overlay)'; (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                      {fontSearch && fontSearchResults.length === 0 && (
+                        <p className="px-3 py-4 text-xs text-center" style={{ color: 'var(--text-subtle)' }}>No fonts found</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload font */}
+              <button
+                onClick={() => fontUploadRef.current?.click()}
+                className="flex items-center gap-1.5 text-xs transition-colors px-3 py-2 rounded-lg border"
+                style={{ background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--accent)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Upload font
+              </button>
+              <input
+                ref={fontUploadRef}
+                type="file"
+                accept=".ttf,.otf,.woff,.woff2"
+                className="sr-only"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFontUpload(f); e.target.value = ''; }}
+              />
+            </div>
           </Section>
 
           {/* ── Identity section ── */}
-          <Section title="Identity" subtitle="Brand name used in the email header and footer.">
-            <div
-              className="rounded-xl p-4"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-            >
+          <Section title="Identity" subtitle="Logo, brand name, and logo font for email headers.">
+            {/* Logo uploads */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {([['light', 'Light logo', Sun, kit.logoLight], ['dark', 'Dark logo', Moon, kit.logoDark]] as const).map(([variant, label, Icon, value]) => (
+                <div key={variant}>
+                  <p className="text-[11px] font-medium mb-1.5 px-0.5" style={{ color: 'var(--text-subtle)' }}>{label}</p>
+                  <button
+                    onClick={() => (variant === 'light' ? logoLightRef : logoDarkRef).current?.click()}
+                    className="w-full h-24 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-colors"
+                    style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
+                  >
+                    {value ? (
+                      <img src={value} alt={label} className="max-h-14 max-w-full object-contain" />
+                    ) : (
+                      <>
+                        <Icon className="w-5 h-5" style={{ color: 'var(--text-subtle)' }} />
+                        <span className="text-[10px]" style={{ color: 'var(--text-subtle)' }}>Upload {label.toLowerCase()}</span>
+                      </>
+                    )}
+                  </button>
+                  {value && (
+                    <button
+                      onClick={() => markDirty({ ...kit, [variant === 'light' ? 'logoLight' : 'logoDark']: undefined })}
+                      className="mt-1 text-[10px] w-full text-center transition-colors"
+                      style={{ color: 'var(--text-subtle)' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--text-subtle)'; }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <input ref={logoLightRef} type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f, 'light'); e.target.value = ''; }} />
+            <input ref={logoDarkRef} type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f, 'dark'); e.target.value = ''; }} />
+
+            {/* Brand name */}
+            <div className="rounded-xl p-4 mb-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
                 Brand name / Logo text
               </label>
@@ -393,14 +572,41 @@ export default function BrandKitEditorPage({ params }: { params: Promise<{ id: s
                 onChange={(e) => markDirty({ ...kit, logoText: e.target.value })}
                 placeholder="e.g. Acme Corp"
                 className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-all"
-                style={{
-                  background: 'var(--elevated)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text)',
-                }}
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)' }}
                 onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; }}
                 onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
               />
+            </div>
+
+            {/* Logo font */}
+            <div className="rounded-xl p-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                Logo font
+              </label>
+              <select
+                value={kit.logoFontFamily ?? 'system'}
+                onChange={(e) => markDirty({ ...kit, logoFontFamily: e.target.value })}
+                className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+                style={{ background: 'var(--elevated)', border: '1px solid var(--border)', color: 'var(--text)' }}
+              >
+                {SYSTEM_FONT_OPTIONS.map((f) => (
+                  <option key={f.value} value={f.value}>{f.label}</option>
+                ))}
+                {(kit.customFonts ?? []).map((f) => (
+                  <option key={f.name} value={f.name}>{f.name}</option>
+                ))}
+              </select>
+              {kit.logoText && (
+                <p
+                  className="mt-3 text-base truncate"
+                  style={{
+                    fontFamily: kit.logoFontFamily && kit.logoFontFamily !== 'system' ? kit.logoFontFamily : undefined,
+                    color: 'var(--text)',
+                  }}
+                >
+                  {kit.logoText}
+                </p>
+              )}
             </div>
           </Section>
 
