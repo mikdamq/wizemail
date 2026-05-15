@@ -245,6 +245,46 @@ function SavedBlocksPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
+/* ─── Layout Presets ────────────────────────────────────── */
+
+const LAYOUT_PRESETS: Array<{ label: string; widths: number[] }> = [
+  { label: '1 col', widths: [1] },
+  { label: '½ ½', widths: [0.5, 0.5] },
+  { label: '⅔ ⅓', widths: [2 / 3, 1 / 3] },
+  { label: '⅓ ⅔', widths: [1 / 3, 2 / 3] },
+  { label: '⅓ ⅓ ⅓', widths: [1 / 3, 1 / 3, 1 / 3] },
+  { label: '¼ ¾', widths: [0.25, 0.75] },
+];
+
+function LayoutPicker({ rowId, onClose }: { rowId: string; onClose: () => void }) {
+  const { setRowLayout } = useEmailStore();
+  return (
+    <div className="absolute bottom-full left-0 mb-1 z-50 bg-[#18181b] border border-[#2a2a2e] rounded-lg shadow-xl p-2 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+      <p className="text-[9px] font-semibold text-[#52525b] uppercase tracking-wider px-1 pb-1.5">Column layout</p>
+      <div className="space-y-0.5">
+        {LAYOUT_PRESETS.map((preset) => (
+          <button
+            key={preset.label}
+            onClick={() => { setRowLayout(rowId, preset.widths); onClose(); }}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#2a2a2e] transition-colors group"
+          >
+            <div className="flex gap-0.5 h-4 flex-shrink-0">
+              {preset.widths.map((w, i) => (
+                <div
+                  key={i}
+                  className="h-full rounded-sm bg-[#3a3a3e] group-hover:bg-[#6366f1]/60 transition-colors"
+                  style={{ width: `${Math.round(w * 48)}px` }}
+                />
+              ))}
+            </div>
+            <span className="text-[10px] text-[#71717a] group-hover:text-[#a1a1aa] transition-colors">{preset.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Sortable Column Chip ──────────────────────────────── */
 
 function SortableColumnChip({
@@ -319,11 +359,25 @@ function SortableRowItem({
   onSaveBlock: (row: EmailRow) => void;
   isColDragActive?: boolean;
 }) {
-  const { selected, removeRow, duplicateRow, addColumnToRow } = useEmailStore();
+  const { selected, removeRow, duplicateRow } = useEmailStore();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
+  const [showLayoutPicker, setShowLayoutPicker] = useState(false);
+  const layoutBtnRef = useRef<HTMLButtonElement>(null);
 
   const isSingleCol = row.columns.length === 1;
   const isRowSelected = selected?.rowId === row.id;
+
+  const layoutContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showLayoutPicker) return;
+    const handler = (e: MouseEvent) => {
+      if (layoutContainerRef.current && !layoutContainerRef.current.contains(e.target as Node)) {
+        setShowLayoutPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showLayoutPicker]);
 
   const stateClasses = isColDragActive
     ? 'border-[#6366f1]/40 bg-[#6366f1]/5'
@@ -369,13 +423,17 @@ function SortableRowItem({
         </SortableContext>
 
         {/* Row actions */}
-        <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div ref={layoutContainerRef} className="relative flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          {showLayoutPicker && (
+            <LayoutPicker rowId={row.id} onClose={() => setShowLayoutPicker(false)} />
+          )}
           <button
-            onClick={() => addColumnToRow(row.id)}
+            ref={layoutBtnRef}
+            onClick={(e) => { e.stopPropagation(); setShowLayoutPicker((v) => !v); }}
             className="p-1 rounded text-[#3a3a3e] hover:text-[#6366f1] hover:bg-[#6366f1]/10 transition-colors"
-            title="Add column"
+            title="Change column layout"
           >
-            <Plus className="w-3 h-3" />
+            <Layout className="w-3 h-3" />
           </button>
           <button
             onClick={() => {

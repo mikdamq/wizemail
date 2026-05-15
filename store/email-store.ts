@@ -71,6 +71,7 @@ interface EmailStore {
   reorderColumnsInRow: (rowId: string, oldIndex: number, newIndex: number) => void;
   moveColumnBetweenRows: (fromRowId: string, colId: string, toRowId: string, toIndex: number) => void;
   updateColumnSpacing: (rowId: string, colIdx: number, spacing: Partial<Pick<EmailColumn, 'paddingTop' | 'paddingBottom' | 'paddingLeft' | 'paddingRight'>>) => void;
+  setRowLayout: (rowId: string, widths: number[]) => void;
 
   // Brand kit
   updateBrandKit: (kit: Partial<BrandKit>) => void;
@@ -395,6 +396,26 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
       future: [],
       hasUnsavedChanges: !!state.currentDesignId,
     })),
+
+  setRowLayout: (rowId, widths) =>
+    set((state) => {
+      const row = state.rows.find((r) => r.id === rowId);
+      if (!row) return state;
+      const n = widths.length;
+      const newCols: EmailColumn[] = widths.map((w, i) => {
+        const existing = row.columns[i];
+        const col: EmailColumn = existing
+          ? { ...existing, width: n === 1 ? undefined : w }
+          : { id: generateId(), type: 'empty', content: {}, width: n === 1 ? undefined : w };
+        return col;
+      });
+      return {
+        rows: state.rows.map((r) => r.id !== rowId ? r : { ...r, columns: newCols }),
+        past: pushHistory(state.past, state.rows),
+        future: [],
+        hasUnsavedChanges: !!state.currentDesignId,
+      };
+    }),
 
   insertSectionTemplate: (template, afterRowId) =>
     set((state) => {

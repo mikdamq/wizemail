@@ -1048,7 +1048,11 @@ export function renderRow(row: EmailRow, isDark: boolean, brandKit?: BrandKit): 
   const outerPr = row.outerPaddingRight ?? row.outerPaddingX ?? 40;
   const outerPb = row.outerPaddingBottom ?? row.outerPaddingY ?? 24;
   const outerPl = row.outerPaddingLeft ?? row.outerPaddingX ?? 40;
-  const colWidth = Math.floor((totalWidth - gap * (n - 1)) / n);
+  const availableWidth = totalWidth - gap * (n - 1);
+  const hasCustomWidths = row.columns.some((c) => c.width !== undefined);
+  const colWidths = hasCustomWidths
+    ? row.columns.map((c) => Math.floor((c.width ?? 1 / n) * availableWidth))
+    : row.columns.map(() => Math.floor(availableWidth / n));
 
   const colsHTML = row.columns.map((col, i) => {
     const rawColBg = resolveColor(col.content.backgroundColor, kit, '#ffffff');
@@ -1061,7 +1065,7 @@ export function renderRow(row: EmailRow, isDark: boolean, brandKit?: BrandKit): 
     const colPad = hasColPad
       ? padCss(col.paddingTop ?? 0, col.paddingRight ?? 0, col.paddingBottom ?? 0, col.paddingLeft ?? 0, rtl)
       : '';
-    return `          <td class="email-col" width="${colWidth}" valign="top" style="${colGapPad}${colPad}background-color:${bg};">
+    return `          <td class="email-col" width="${colWidths[i]}" valign="top" style="${colGapPad}${colPad}background-color:${bg};">
             ${renderColumnContent(col.type, col.content, isDark, brandKit)}
           </td>`;
   }).join('\n');

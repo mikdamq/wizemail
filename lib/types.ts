@@ -166,6 +166,8 @@ export interface EmailColumn {
   paddingBottom?: number;
   paddingLeft?: number;
   paddingRight?: number;
+  /** Fractional width (0–1). undefined = equal split. All columns in a row should sum to 1. */
+  width?: number;
 }
 
 export interface EmailRow {
