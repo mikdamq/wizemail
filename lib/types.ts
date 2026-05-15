@@ -52,6 +52,12 @@ export interface SectionContent {
 
   // Header
   logoText?: string;
+  /** When true, render logo image instead of text */
+  useLogoImage?: boolean;
+  /** Override logo image URL; falls back to brand kit logoLight/logoDark based on bg brightness */
+  logoImageUrl?: string;
+  /** Logo image height in px */
+  logoHeight?: number;
 
   // Hero / Headlines
   headline?: string;

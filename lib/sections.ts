@@ -364,14 +364,38 @@ function renderSectionInner(type: SectionType, content: SectionContent, darkMode
       const hSize = content.headlineFontSize ?? 20;
       const hWeight = content.headlineFontWeight ?? 700;
       const ls = content.letterSpacing != null ? `letter-spacing:${content.letterSpacing}em;` : (rtl ? '' : 'letter-spacing:-0.3px;');
+      const logoH = content.logoHeight ?? 40;
+
+      // Determine logo image URL: explicit override → brand kit logo (light/dark based on bg) → none
+      let logoImgSrc: string | null = null;
+      if (content.useLogoImage) {
+        if (content.logoImageUrl) {
+          logoImgSrc = content.logoImageUrl;
+        } else {
+          // Pick light or dark logo based on background brightness
+          const bgHex = bg.replace('#', '');
+          const r = parseInt(bgHex.slice(0, 2), 16);
+          const g = parseInt(bgHex.slice(2, 4), 16);
+          const b2 = parseInt(bgHex.slice(4, 6), 16);
+          const luminance = (0.299 * r + 0.587 * g + 0.114 * b2) / 255;
+          logoImgSrc = luminance < 0.5
+            ? (kit.logoLight ?? kit.logoDark ?? null)
+            : (kit.logoDark ?? kit.logoLight ?? null);
+        }
+      }
+
+      const logoContent = logoImgSrc
+        ? `<img src="${esc(logoImgSrc)}" alt="${esc(content.logoText ?? 'Logo')}" height="${logoH}" style="display:block;height:${logoH}px;border:0;" />`
+        : `<span style="${FONT(resolvedFont)};font-size:${hSize}px;font-weight:${hWeight};color:${fg};${ls}">${esc(content.logoText ?? 'Company')}</span>`;
+
       return `
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="${bgTableStyle(bg, content)}">
   <tr>
     <td align="center" style="${sectionPad(content, 20, 40, rtl)}">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
         <tr>
-          <td style="${FONT(resolvedFont)};font-size:${hSize}px;font-weight:${hWeight};color:${fg};${ls}">
-            ${esc(content.logoText ?? 'Company')}
+          <td>
+            ${logoContent}
           </td>
         </tr>
       </table>
@@ -971,8 +995,18 @@ export function renderColumnContent(type: SectionType, content: SectionContent, 
       </td></tr></table>`;
     }
 
-    case 'header':
-      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 12px;${FONT(resolvedFont)};font-size:17px;font-weight:700;color:${fg};">${esc(content.logoText ?? 'Company')}</td></tr></table>`;
+    case 'header': {
+      const logoH2 = content.logoHeight ?? 36;
+      let logoSrc2: string | null = null;
+      if (content.useLogoImage) {
+        logoSrc2 = content.logoImageUrl ?? kit.logoDark ?? kit.logoLight ?? null;
+      }
+      return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:14px 12px;">${
+        logoSrc2
+          ? `<img src="${esc(logoSrc2)}" alt="${esc(content.logoText ?? 'Logo')}" height="${logoH2}" style="display:block;height:${logoH2}px;border:0;" />`
+          : `<span style="${FONT(resolvedFont)};font-size:17px;font-weight:700;color:${fg};">${esc(content.logoText ?? 'Company')}</span>`
+      }</td></tr></table>`;
+    }
 
     case 'divider': {
       const divColor = resolveColor(content.dividerColor ?? '#e5e7eb', kit, '#e5e7eb');

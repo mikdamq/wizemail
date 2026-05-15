@@ -599,11 +599,48 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
       )}
 
       {type === 'header' && (
-        <CollapsibleGroup title="Brand" defaultOpen={true}>
-          <TextField label="Logo text" value={content.logoText} onChange={u('logoText')} placeholder="Your Brand" aiButton={<AiBtn field="logoText" updateKey="logoText" />} />
-          <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
-          <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
-        </CollapsibleGroup>
+        <>
+          <CollapsibleGroup title="Logo" defaultOpen={true}>
+            {/* Toggle: text vs image */}
+            <div className="flex rounded-lg overflow-hidden border border-[#2a2a2e] mb-2">
+              {(['text', 'image'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => u('useLogoImage')(mode === 'image')}
+                  className={`flex-1 py-1.5 text-[11px] font-medium transition-colors capitalize ${
+                    (mode === 'image') === !!content.useLogoImage
+                      ? 'bg-[#6366f1] text-white'
+                      : 'text-[#71717a] hover:text-[#f4f4f5] bg-[#1c1c1f]'
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+            {!content.useLogoImage ? (
+              <TextField label="Logo text" value={content.logoText} onChange={u('logoText')} placeholder="Your Brand" aiButton={<AiBtn field="logoText" updateKey="logoText" />} />
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-medium text-[#71717a] uppercase tracking-wider">Logo image URL</p>
+                  <input
+                    type="text"
+                    value={content.logoImageUrl ?? ''}
+                    onChange={(e) => u('logoImageUrl')(e.target.value)}
+                    placeholder="https://… or leave empty to use brand kit logo"
+                    className="w-full bg-[#1c1c1f] border border-[#2a2a2e] rounded-md px-2.5 py-1.5 text-xs text-[#f4f4f5] placeholder-[#3a3a3e] focus:outline-none focus:border-[#6366f1]/60 transition-colors"
+                  />
+                  <p className="text-[9px] text-[#52525b] leading-relaxed">Leave blank to auto-pick from brand kit (light/dark logo based on background color)</p>
+                </div>
+                <NumberField label="Logo height (px)" value={content.logoHeight ?? 40} onChange={u('logoHeight')} min={16} max={120} />
+              </>
+            )}
+          </CollapsibleGroup>
+          <CollapsibleGroup title="Colors">
+            <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+            <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+          </CollapsibleGroup>
+        </>
       )}
 
       {type === 'footer' && (
