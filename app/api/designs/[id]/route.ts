@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { checkUserAccess } from '@/lib/guards';
 import type { Database } from '@/lib/supabase/database.types';
 
 type DesignRow = Database['public']['Tables']['designs']['Row'];
@@ -25,6 +26,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  const accessError = await checkUserAccess(userData.user.id);
+  if (accessError) return accessError;
 
   const { id } = await params;
   const { data, error } = await supabase
@@ -45,6 +48,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  const accessErrorPatch = await checkUserAccess(userData.user.id);
+  if (accessErrorPatch) return accessErrorPatch;
 
   const { id } = await params;
   const body = (await request.json()) as { name?: string; version?: number };
@@ -83,6 +88,8 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
 
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  const accessErrorDelete = await checkUserAccess(userData.user.id);
+  if (accessErrorDelete) return accessErrorDelete;
 
   const { id } = await params;
   const { error } = await supabase

@@ -64,3 +64,23 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ brandKit: toBrandKit(data) });
 }
+
+export async function DELETE(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return NextResponse.json({ error: 'Supabase is not configured' }, { status: 503 });
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+
+  const id = request.nextUrl.searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+
+  const { error } = await supabase
+    .from('brand_kits')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userData.user.id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true });
+}

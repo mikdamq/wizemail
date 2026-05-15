@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { CreditCard, LogOut, UserCircle, ChevronDown } from 'lucide-react';
+import { CreditCard, LogOut, UserCircle, ChevronDown, Settings } from 'lucide-react';
 import { createBrowserSupabaseClient } from '@/lib/supabase/browser';
 
 export function AccountMenu() {
@@ -47,7 +47,10 @@ export function AccountMenu() {
 
   if (!supabase) {
     return (
-      <span className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#f59e0b]/25 bg-[#f59e0b]/10 text-[10px] text-[#f59e0b]">
+      <span
+        className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[10px]"
+        style={{ background: 'rgba(245,158,11,0.1)', borderColor: 'rgba(245,158,11,0.25)', color: 'var(--warning)' }}
+      >
         Auth env missing
       </span>
     );
@@ -57,7 +60,12 @@ export function AccountMenu() {
     return (
       <Link
         href="/auth"
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#222226] border border-[#2a2a2e] text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs transition-colors"
+        style={{
+          background: 'var(--surface)',
+          borderColor: 'var(--border)',
+          color: 'var(--text-muted)',
+        }}
       >
         <UserCircle className="w-3.5 h-3.5" />
         Sign in
@@ -71,26 +79,43 @@ export function AccountMenu() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-lg hover:bg-[#222226] transition-colors group"
+        className="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-lg transition-colors group"
+        style={{ color: 'var(--text-muted)' }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--overlay)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
       >
-        <div className="w-6 h-6 rounded-full bg-[#6366f1] flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0">
+        <div
+          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0"
+          style={{ background: 'var(--accent)' }}
+        >
           {initial}
         </div>
-        <span className="hidden md:block text-[11px] text-[#a1a1aa] max-w-[120px] truncate group-hover:text-[#f4f4f5] transition-colors">{email}</span>
-        <ChevronDown className={`w-3 h-3 text-[#71717a] group-hover:text-[#a1a1aa] transition-all duration-150 ${open ? 'rotate-180' : ''}`} />
+        <span className="hidden md:block text-[11px] max-w-[120px] truncate" style={{ color: 'var(--text-muted)' }}>
+          {email}
+        </span>
+        <ChevronDown
+          className={`w-3 h-3 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+          style={{ color: 'var(--text-subtle)' }}
+        />
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 mt-1.5 w-52 bg-[#1c1c1f] border border-[#2a2a2e] rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div
+          className="absolute top-full right-0 mt-1.5 w-52 rounded-xl shadow-2xl z-50 overflow-hidden"
+          style={{ background: 'var(--elevated)', border: '1px solid var(--border)' }}
+        >
           {/* User info */}
-          <div className="px-3 py-3 border-b border-[#2a2a2e]">
+          <div className="px-3 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#6366f1] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
+                style={{ background: 'var(--accent)' }}
+              >
                 {initial}
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-medium text-[#f4f4f5] truncate">{email}</p>
-                <p className="text-[10px] text-[#71717a]">Free plan</p>
+                <p className="text-[11px] font-medium truncate" style={{ color: 'var(--text)' }}>{email}</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Free plan</p>
               </div>
             </div>
           </div>
@@ -98,19 +123,54 @@ export function AccountMenu() {
           {/* Menu items */}
           <div className="py-1">
             <Link
+              href="/settings"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 text-xs transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--text)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--overlay)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
+                (e.currentTarget as HTMLElement).style.background = 'transparent';
+              }}
+            >
+              <Settings className="w-3.5 h-3.5 flex-shrink-0" />
+              Settings
+            </Link>
+            <Link
               href="/billing"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#222226] transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2 text-xs transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--text)';
+                (e.currentTarget as HTMLElement).style.background = 'var(--overlay)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
+                (e.currentTarget as HTMLElement).style.background = 'transparent';
+              }}
             >
               <CreditCard className="w-3.5 h-3.5 flex-shrink-0" />
               Billing & plan
             </Link>
           </div>
 
-          <div className="border-t border-[#2a2a2e] py-1">
+          <div className="py-1" style={{ borderTop: '1px solid var(--border)' }}>
             <button
               onClick={signOut}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#a1a1aa] hover:text-red-400 hover:bg-red-400/5 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = '#f87171';
+                (e.currentTarget as HTMLElement).style.background = 'rgba(248,113,113,0.06)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
+                (e.currentTarget as HTMLElement).style.background = 'transparent';
+              }}
             >
               <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
               Sign out

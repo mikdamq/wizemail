@@ -1029,7 +1029,7 @@ export function renderRow(row: EmailRow, isDark: boolean, brandKit?: BrandKit): 
       const pb = row.outerPaddingBottom ?? row.outerPaddingY ?? 0;
       const pl = row.outerPaddingLeft ?? row.outerPaddingX ?? 0;
       return `
-<table role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0">
+<table data-row-id="${row.id}" role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
     <td style="${padCss(pt, pr, pb, pl, rtl)}">
       ${renderSection(col.type, col.content, isDark, brandKit)}
@@ -1037,7 +1037,8 @@ export function renderRow(row: EmailRow, isDark: boolean, brandKit?: BrandKit): 
   </tr>
 </table>`;
     }
-    return renderSection(col.type, col.content, isDark, brandKit);
+    // Wrap single-column section with a row table so we always have a data-row-id root
+    return `<table data-row-id="${row.id}" role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td>${renderSection(col.type, col.content, isDark, brandKit)}</td></tr></table>`;
   }
 
   const n = row.columns.length;
@@ -1066,7 +1067,7 @@ export function renderRow(row: EmailRow, isDark: boolean, brandKit?: BrandKit): 
   }).join('\n');
 
   return `
-<table role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0">
+<table data-row-id="${row.id}" role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr>
     <td align="center" style="${padCss(outerPt, outerPr, outerPb, outerPl, rtl)}">
       <table role="presentation" width="${totalWidth}" cellpadding="0" cellspacing="0" border="0" style="max-width:${totalWidth}px;width:100%;">

@@ -3,7 +3,7 @@ import type { SectionType, SectionContent } from './types';
 export type MainCategory =
   | 'marketing' | 'ecommerce' | 'transactional' | 'saas'
   | 'engagement' | 'event' | 'survey' | 'lead'
-  | 'corporate' | 'industry' | 'seasonal' | 'interactive';
+  | 'corporate' | 'industry' | 'seasonal' | 'interactive' | 'arabic';
 
 export interface SubCategoryDef {
   id: string;
@@ -32,6 +32,7 @@ export interface EmailTemplate {
   access?: 'free' | 'premium';
   featured?: boolean;
   collection?: 'seasonal' | 'launch' | 'sales' | 'lifecycle';
+  direction?: 'ltr' | 'rtl';
   sections: TemplateSectionDef[];
 }
 
@@ -154,6 +155,18 @@ export const MAIN_CATEGORY_DEFS: MainCategoryDef[] = [
       { id: 'poll-email', label: 'Poll Email' },
       { id: 'quiz-email', label: 'Quiz Email' },
       { id: 'interactive-survey', label: 'Interactive Survey' },
+    ],
+  },
+  {
+    id: 'arabic',
+    label: 'عربي · Arabic',
+    color: '#059669',
+    subCategories: [
+      { id: 'ramadan', label: 'Ramadan / رمضان' },
+      { id: 'eid', label: 'Eid / عيد' },
+      { id: 'arabic-ecommerce', label: 'E-commerce / تجارة' },
+      { id: 'arabic-saas', label: 'SaaS / برمجيات' },
+      { id: 'arabic-welcome', label: 'Welcome / ترحيب' },
     ],
   },
 ];
@@ -2375,6 +2388,393 @@ export const TEMPLATES: EmailTemplate[] = [
         },
       },
       STD_FOOTER(),
+    ],
+  },
+
+  // ── ARABIC ───────────────────────────────────────────────────────────────────
+
+  {
+    id: 'arabic-ramadan-greeting',
+    name: 'رمضان كريم — Ramadan Greeting',
+    description: 'A warm Ramadan newsletter with RTL layout, crescent motifs, and Arabic typography.',
+    mainCategory: 'arabic',
+    subCategory: 'ramadan',
+    accentColor: '#059669',
+    direction: 'rtl',
+    featured: true,
+    sections: [
+      {
+        type: 'header',
+        content: {
+          logoText: 'شركتكم',
+          backgroundColor: '#064e3b',
+          textColor: '#a7f3d0',
+        },
+      },
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#064e3b',
+          textColor: '#f0fdf4',
+          headline: 'رمضان كريم 🌙',
+          subheadline: 'بمناسبة حلول شهر رمضان المبارك، نتقدم إليكم بأصدق التهاني والتمنيات بالصحة والسعادة والبركة في هذا الشهر الفضيل.',
+          buttonText: 'اكتشف عروضنا الخاصة',
+          buttonColor: '#059669',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+          headlineFontSize: 40,
+          headlineFontWeight: 700,
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#f0fdf4',
+          textColor: '#064e3b',
+          bodyText: 'يسعدنا في هذه المناسبة المباركة أن نُقدّم لكم مجموعة من العروض الحصرية خلال شهر رمضان. نتمنى لكم صياماً مقبولاً وإفطاراً شهياً.\n\nرمضان شهر الخير والعطاء، ونحن هنا لنكون معكم في كل خطوة.',
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#ecfdf5',
+          textColor: '#064e3b',
+          headline: 'عروض رمضان الحصرية',
+          featureItems: [
+            { title: 'خصم ٣٠٪', text: 'على جميع المنتجات المختارة طوال شهر رمضان المبارك.' },
+            { title: 'توصيل مجاني', text: 'لجميع الطلبات التي تتجاوز ٢٠٠ ريال خلال الشهر.' },
+            { title: 'هدايا رمضانية', text: 'هدية مميزة مع كل طلب يزيد عن ٥٠٠ ريال.' },
+          ],
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#059669',
+          textColor: '#ffffff',
+          headline: 'لا تفوّت عروضنا الرمضانية الحصرية',
+          buttonText: 'تسوّق الآن →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#059669',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'footer',
+        content: {
+          backgroundColor: '#064e3b',
+          textColor: '#6ee7b7',
+          companyName: 'شركتكم',
+          companyAddress: 'المملكة العربية السعودية، الرياض',
+          unsubscribeUrl: '#',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'arabic-eid-celebration',
+    name: 'عيد مبارك — Eid Celebration',
+    description: 'Festive Eid al-Fitr or Eid al-Adha email with warm gold tones and RTL layout.',
+    mainCategory: 'arabic',
+    subCategory: 'eid',
+    accentColor: '#d97706',
+    direction: 'rtl',
+    sections: [
+      {
+        type: 'header',
+        content: {
+          logoText: 'علامتكم',
+          backgroundColor: '#78350f',
+          textColor: '#fde68a',
+        },
+      },
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#92400e',
+          textColor: '#fffbeb',
+          headline: 'عيد مبارك وسعيد 🎉',
+          subheadline: 'تقبّل الله منا ومنكم صالح الأعمال. نتمنى لكم عيداً مليئاً بالفرحة والسرور والمحبة.',
+          buttonText: 'تفضّل بزيارتنا',
+          buttonColor: '#d97706',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+          headlineFontSize: 38,
+          headlineFontWeight: 700,
+        },
+      },
+      {
+        type: 'stats',
+        content: {
+          backgroundColor: '#fffbeb',
+          textColor: '#78350f',
+          headline: 'احتفالاتنا معكم هذا العيد',
+          buttonColor: '#d97706',
+          statItems: [
+            { value: '+٥٠٪', label: 'خصم العيد' },
+            { value: '٢٤ ساعة', label: 'توصيل سريع' },
+            { value: 'مجاناً', label: 'الإرجاع' },
+          ],
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#fef3c7',
+          textColor: '#78350f',
+          bodyText: 'بمناسبة العيد السعيد، نقدم لكم أجمل العروض الاحتفالية. سواء كنتم تبحثون عن هدايا للأحبة أو مستلزمات الاحتفال، نحن هنا لنجعل عيدكم أكثر بهجة.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#d97706',
+          textColor: '#ffffff',
+          headline: 'اجعل عيدكم لا يُنسى مع عروضنا الحصرية',
+          buttonText: 'استكشف العروض',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#d97706',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'footer',
+        content: {
+          backgroundColor: '#78350f',
+          textColor: '#fde68a',
+          companyName: 'علامتكم',
+          companyAddress: 'الإمارات العربية المتحدة، دبي',
+          unsubscribeUrl: '#',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'arabic-ecommerce-promo',
+    name: 'عرض متجر — Arabic E-commerce Promo',
+    description: 'Product promotion email for Arabic-speaking markets with RTL product grid.',
+    mainCategory: 'arabic',
+    subCategory: 'arabic-ecommerce',
+    accentColor: '#7c3aed',
+    direction: 'rtl',
+    sections: [
+      {
+        type: 'header',
+        content: {
+          logoText: 'متجركم',
+          backgroundColor: '#ffffff',
+          textColor: '#111111',
+        },
+      },
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#7c3aed',
+          textColor: '#ffffff',
+          headline: 'تخفيضات كبرى على أفضل المنتجات',
+          subheadline: 'اكتشف مجموعتنا المختارة بعناية. جودة عالية، أسعار لا تُقاوم، توصيل سريع لباب منزلك.',
+          buttonText: 'تسوّق الآن',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#7c3aed',
+          buttonUrl: '#',
+          headlineFontSize: 34,
+          headlineFontWeight: 700,
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#111111',
+          headline: 'لماذا تختار متجرنا؟',
+          featureItems: [
+            { title: 'جودة مضمونة', text: 'جميع منتجاتنا مختارة بعناية ومعتمدة من فريق الجودة لدينا.' },
+            { title: 'أسعار تنافسية', text: 'نضمن لك أفضل الأسعار في السوق مع عروض حصرية للمشتركين.' },
+            { title: 'خدمة عملاء ٢٤/٧', text: 'فريقنا متاح على مدار الساعة للإجابة على استفساراتكم.' },
+          ],
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#f3f4f6',
+          textColor: '#111111',
+          headline: 'العرض ينتهي خلال ٤٨ ساعة — لا تفوّته!',
+          buttonText: 'احجز طلبك الآن',
+          buttonColor: '#7c3aed',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'footer',
+        content: {
+          backgroundColor: '#111111',
+          textColor: '#6b7280',
+          companyName: 'متجركم',
+          companyAddress: 'المملكة العربية السعودية، جدة',
+          unsubscribeUrl: '#',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'arabic-saas-welcome',
+    name: 'مرحباً بك في المنصة — Arabic SaaS Welcome',
+    description: 'Onboarding welcome email for Arabic-first SaaS products with RTL layout.',
+    mainCategory: 'arabic',
+    subCategory: 'arabic-saas',
+    accentColor: '#0ea5e9',
+    direction: 'rtl',
+    sections: [
+      {
+        type: 'header',
+        content: {
+          logoText: 'منصتكم',
+          backgroundColor: '#0c4a6e',
+          textColor: '#bae6fd',
+        },
+      },
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#0c4a6e',
+          textColor: '#f0f9ff',
+          headline: 'مرحباً بك في منصتنا! 🚀',
+          subheadline: 'نحن سعداء جداً بانضمامك إلينا. حسابك جاهز الآن وبإمكانك البدء فوراً باستخدام جميع الميزات.',
+          buttonText: 'ابدأ الآن',
+          buttonColor: '#0ea5e9',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+          headlineFontSize: 36,
+          headlineFontWeight: 700,
+        },
+      },
+      {
+        type: 'features',
+        content: {
+          backgroundColor: '#f0f9ff',
+          textColor: '#0c4a6e',
+          headline: 'ثلاث خطوات للبداية',
+          featureItems: [
+            { title: '١. أكمل ملفك الشخصي', text: 'أضف معلوماتك وشعار شركتك لتجربة مخصصة تماماً لك.' },
+            { title: '٢. أنشئ مشروعك الأول', text: 'ابدأ بمشروع جديد أو استورد بياناتك الحالية بسهولة.' },
+            { title: '٣. دعوة فريقك', text: 'شارك الوصول مع زملائك وابدأوا العمل معاً على الفور.' },
+          ],
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#111111',
+          bodyText: 'هل تحتاج مساعدة في البدء؟ فريق الدعم الفني متاح لك على مدار الساعة. يمكنك أيضاً الاطلاع على مركز المساعدة لمقاطع الفيديو التعليمية والأدلة الإرشادية.',
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#0ea5e9',
+          textColor: '#ffffff',
+          headline: 'جاهز للبدء؟ لوحة التحكم تنتظرك',
+          buttonText: 'اذهب إلى لوحة التحكم →',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#0ea5e9',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'footer',
+        content: {
+          backgroundColor: '#0c4a6e',
+          textColor: '#bae6fd',
+          companyName: 'منصتكم',
+          companyAddress: 'المملكة العربية السعودية، الرياض',
+          unsubscribeUrl: '#',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'arabic-welcome-newsletter',
+    name: 'أهلاً وسهلاً — Arabic Welcome Newsletter',
+    description: 'Warm subscriber welcome email for Arabic audiences with brand story and CTAs.',
+    mainCategory: 'arabic',
+    subCategory: 'arabic-welcome',
+    accentColor: '#dc2626',
+    direction: 'rtl',
+    sections: [
+      {
+        type: 'header',
+        content: {
+          logoText: 'نشرتكم',
+          backgroundColor: '#ffffff',
+          textColor: '#111111',
+        },
+      },
+      {
+        type: 'hero',
+        content: {
+          backgroundColor: '#dc2626',
+          textColor: '#ffffff',
+          headline: 'أهلاً بك في عائلتنا! ❤️',
+          subheadline: 'شكراً لاشتراكك في نشرتنا الإخبارية. كل أسبوع، نضع بين يديك أفضل المقالات والأفكار والعروض المختارة خصيصاً لك.',
+          buttonText: 'اقرأ أحدث إصداراتنا',
+          buttonColor: '#ffffff',
+          buttonTextColor: '#dc2626',
+          buttonUrl: '#',
+          headlineFontSize: 36,
+          headlineFontWeight: 700,
+        },
+      },
+      {
+        type: 'text',
+        content: {
+          backgroundColor: '#ffffff',
+          textColor: '#374151',
+          bodyText: 'نحن مجموعة من المتحمسين الذين يؤمنون بأن المحتوى الجيد يغيّر حياة الناس. منذ تأسيسنا، ونحن نعمل يومياً لنقدم لك أفضل وأدق المعلومات في مجالنا.\n\nبانضمامك إلينا، أصبحت جزءاً من مجتمع يزيد على ٥٠٬٠٠٠ قارئ متميز.',
+        },
+      },
+      {
+        type: 'stats',
+        content: {
+          backgroundColor: '#fef2f2',
+          textColor: '#dc2626',
+          headline: 'لماذا نحن؟',
+          buttonColor: '#dc2626',
+          statItems: [
+            { value: '٥٠ ألف', label: 'مشترك' },
+            { value: '٤ سنوات', label: 'من الخبرة' },
+            { value: '٩٨٪', label: 'رضا القراء' },
+          ],
+        },
+      },
+      {
+        type: 'cta',
+        content: {
+          backgroundColor: '#111111',
+          textColor: '#ffffff',
+          headline: 'تابعنا على وسائل التواصل الاجتماعي للمزيد',
+          buttonText: 'تابعنا الآن',
+          buttonColor: '#dc2626',
+          buttonTextColor: '#ffffff',
+          buttonUrl: '#',
+        },
+      },
+      {
+        type: 'footer',
+        content: {
+          backgroundColor: '#111111',
+          textColor: '#6b7280',
+          companyName: 'نشرتكم',
+          companyAddress: 'مصر، القاهرة',
+          unsubscribeUrl: '#',
+        },
+      },
     ],
   },
 ];

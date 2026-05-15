@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Mail, Eye, Code2, Columns2, Monitor, Tablet, Smartphone,
-  Sun, Moon, Download, Copy, Check, ChevronDown, ImageIcon, Layers, Code,
-  Save, BookOpen, Braces, Plus, X, SendHorizonal, Pencil, Undo2, Redo2, Upload,
+  Sun, Moon, Download, Copy, Check, ChevronDown, ImageIcon, Code,
+  Save, Braces, Plus, X, SendHorizonal, Pencil, Undo2, Redo2, Upload, MoreHorizontal,
 } from 'lucide-react';
 import { SendTestModal } from '@/components/builder/SendTestModal';
+import { trackClientEvent } from '@/lib/track-client';
 import { ImportHtmlModal } from '@/components/builder/ImportHtmlModal';
 import { AccountMenu } from '@/components/auth/AccountMenu';
 import { toast } from 'sonner';
@@ -73,6 +74,7 @@ export function TopBar() {
   const [exportOpen, setExportOpen] = useState(false);
   const [clientOpen, setClientOpen] = useState(false);
   const [variablesOpen, setVariablesOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [sendTestOpen, setSendTestOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [exporting, setExporting] = useState<string | null>(null);
@@ -165,6 +167,19 @@ export function TopBar() {
     setExportOpen(false);
   };
 
+  const handleExportJSON = () => {
+    const sections = rows.map((r) => ({ type: r.columns[0]?.type ?? 'text', content: r.columns[0]?.content ?? {} }));
+    const json = JSON.stringify(sections, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'email-sections.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    setExportOpen(false);
+  };
+
   const assembledHTML = getAssembledHTML();
   const hasMjml = /<mjml[\s>]/i.test(assembledHTML);
 
@@ -218,7 +233,7 @@ export function TopBar() {
           ] as { id: EditorMode; icon: typeof Eye; label: string }[]).map(({ id, icon: Icon, label }) => (
             <button
               key={id}
-              onClick={() => setMode(id)}
+              onClick={() => { setMode(id); trackClientEvent('editor.mode.changed', { mode: id }); }}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-100 ${
                 mode === id
                   ? 'bg-[#222226] text-[#f4f4f5] shadow-sm'
@@ -318,165 +333,156 @@ export function TopBar() {
       {/* Divider */}
       <div className="w-px h-5 bg-[#2a2a2e] mx-2 flex-shrink-0" />
 
-      {/* Group 3: Variables + Import */}
-      <div className="flex items-center gap-0.5 mr-1">
-        {/* Variables manager */}
-        <div className="relative">
-          <button
-            data-tour="variables"
-            onClick={() => { setVariablesOpen(!variablesOpen); setExportOpen(false); setClientOpen(false); }}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              variablesOpen || Object.keys(variables).length > 0
-                ? 'text-[#818cf8] bg-[#6366f1]/10'
-                : 'text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226]'
-            }`}
-            title="Merge variables"
-          >
-          <Braces className="w-3.5 h-3.5" />
-          Variables
+      {/* More overflow menu — Variables, Import, Copy HTML, Send test */}
+      <div className="relative mr-1">
+        <button
+          onClick={() => { setMoreOpen(!moreOpen); setExportOpen(false); setClientOpen(false); }}
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            moreOpen || Object.keys(variables).length > 0
+              ? 'text-[#818cf8] bg-[#6366f1]/10'
+              : 'text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226]'
+          }`}
+          title="More tools"
+        >
+          <MoreHorizontal className="w-3.5 h-3.5" />
           {Object.keys(variables).length > 0 && (
-            <span className="ml-0.5 bg-[#6366f1] text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+            <span className="bg-[#6366f1] text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center flex-shrink-0">
               {Object.keys(variables).length}
             </span>
           )}
         </button>
 
-        {variablesOpen && (
+        {moreOpen && (
           <div
-            className="absolute top-full left-0 mt-1 w-80 bg-[#1c1c1f] border border-[#2a2a2e] rounded-xl shadow-2xl z-50 overflow-hidden"
+            className="absolute top-full left-0 mt-1 w-64 bg-[#1c1c1f] border border-[#2a2a2e] rounded-xl shadow-2xl z-50 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-3 py-2.5 border-b border-[#2a2a2e] flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-[#f4f4f5]">Merge Variables</p>
-                <p className="text-[10px] text-[#71717a] mt-0.5">Use <code className="text-[#818cf8]">{'{{key}}'}</code> in any text field</p>
-              </div>
-              <button onClick={() => setVariablesOpen(false)} className="text-[#3a3a3e] hover:text-[#71717a] transition-colors">
-                <X className="w-3.5 h-3.5" />
+            {/* Quick actions */}
+            <div className="p-1.5 border-b border-[#2a2a2e] flex flex-col gap-0.5">
+              <button
+                onClick={() => { handleCopyHTML(); setMoreOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#222226] transition-colors"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-[#10b981] flex-shrink-0" /> : <Copy className="w-3.5 h-3.5 flex-shrink-0" />}
+                {copied ? 'Copied!' : 'Copy HTML'}
+              </button>
+              <button
+                onClick={() => { setMoreOpen(false); setSendTestOpen(true); }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#222226] transition-colors"
+              >
+                <SendHorizonal className="w-3.5 h-3.5 flex-shrink-0" />
+                Send test email
+              </button>
+              <button
+                onClick={() => { setMoreOpen(false); setImportOpen(true); }}
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#222226] transition-colors"
+              >
+                <Upload className="w-3.5 h-3.5 flex-shrink-0" />
+                Import HTML
               </button>
             </div>
 
-            {/* Variable list */}
-            <div className="max-h-48 overflow-y-auto">
-              {Object.keys(variables).length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 py-6 px-4">
-                  <div className="w-8 h-8 rounded-xl bg-[#0f0f11] border border-[#2a2a2e] flex items-center justify-center">
-                    <Braces className="w-4 h-4 text-[#52525b]" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-[#71717a]">No variables yet</p>
-                    <p className="text-[10px] text-[#3a3a3e] mt-0.5 leading-relaxed">Add one below to use merge tags in your email</p>
-                  </div>
+            {/* Variables section */}
+            <div>
+              <div
+                data-tour="variables"
+                className="px-3 py-2 border-b border-[#2a2a2e] flex items-center justify-between cursor-pointer"
+                onClick={() => setVariablesOpen(!variablesOpen)}
+              >
+                <div className="flex items-center gap-2">
+                  <Braces className="w-3.5 h-3.5 text-[#818cf8]" />
+                  <p className="text-xs font-semibold text-[#f4f4f5]">Merge Variables</p>
+                  {Object.keys(variables).length > 0 && (
+                    <span className="bg-[#6366f1] text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                      {Object.keys(variables).length}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                Object.entries(variables).map(([key, val]) => {
-                  const usageCount = variableUsage[key] || 0;
-                  const isUnused = usageCount === 0;
-                  return (
-                    <div key={key} className={`flex items-center gap-2 px-3 py-2 border-b border-[#1a1a1d] last:border-0 group ${isUnused ? 'opacity-60' : ''}`}>
-                      <code className="text-[10px] text-[#818cf8] bg-[#6366f1]/10 px-1.5 py-0.5 rounded font-mono flex-shrink-0 min-w-0 max-w-[100px] truncate" title={`{{${key}}}`}>
-                        {`{{${key}}}`}
-                      </code>
-                      <span className="text-[#3a3a3e] text-xs flex-shrink-0">→</span>
+                <ChevronDown className={`w-3 h-3 text-[#71717a] transition-transform ${variablesOpen ? 'rotate-180' : ''}`} />
+              </div>
+              <p className="text-[10px] text-[#71717a] px-3 pt-2 pb-1">Use <code className="text-[#818cf8]">{'{{key}}'}</code> in any text field</p>
+
+              {variablesOpen && (
+                <>
+                  {/* Variable list */}
+                  <div className="max-h-40 overflow-y-auto">
+                    {Object.keys(variables).length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-2 py-4 px-4">
+                        <div className="w-7 h-7 rounded-xl bg-[#0f0f11] border border-[#2a2a2e] flex items-center justify-center">
+                          <Braces className="w-3.5 h-3.5 text-[#52525b]" />
+                        </div>
+                        <p className="text-[10px] text-[#71717a] text-center">No variables yet. Add one below.</p>
+                      </div>
+                    ) : (
+                      Object.entries(variables).map(([key, val]) => {
+                        const usageCount = variableUsage[key] || 0;
+                        const isUnused = usageCount === 0;
+                        return (
+                          <div key={key} className={`flex items-center gap-2 px-3 py-2 border-b border-[#1a1a1d] last:border-0 group ${isUnused ? 'opacity-60' : ''}`}>
+                            <code className="text-[10px] text-[#818cf8] bg-[#6366f1]/10 px-1.5 py-0.5 rounded font-mono flex-shrink-0 min-w-0 max-w-[80px] truncate" title={`{{${key}}}`}>
+                              {`{{${key}}}`}
+                            </code>
+                            <input
+                              type="text"
+                              value={val}
+                              onChange={(e) => setVariable(key, e.target.value)}
+                              className="flex-1 min-w-0 text-[11px] bg-[#0f0f11] border border-[#2a2a2e] rounded px-1.5 py-0.5 text-[#f4f4f5] focus:outline-none focus:border-[#6366f1] transition-colors"
+                              placeholder="value"
+                            />
+                            {usageCount > 0 && (
+                              <span className="text-[9px] text-[#10b981] bg-[#10b981]/10 px-1 py-0.5 rounded flex-shrink-0">{usageCount}×</span>
+                            )}
+                            <button
+                              onClick={() => removeVariable(key)}
+                              className="text-[#3a3a3e] hover:text-red-400 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Add new variable */}
+                  <div className="px-3 py-2.5 border-t border-[#2a2a2e] bg-[#161618]">
+                    <div className="flex items-center gap-1.5 mb-1">
                       <input
                         type="text"
-                        value={val}
-                        onChange={(e) => setVariable(key, e.target.value)}
-                        className="flex-1 min-w-0 text-[11px] bg-[#0f0f11] border border-[#2a2a2e] rounded px-1.5 py-0.5 text-[#f4f4f5] focus:outline-none focus:border-[#6366f1] transition-colors placeholder:text-[#3a3a3e]"
-                        placeholder="sample value"
+                        value={newVarKey}
+                        onChange={(e) => { setNewVarKey(e.target.value); if (varKeyError) setVarKeyError(null); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddVariable(); }}
+                        className={`flex-1 min-w-0 text-[11px] bg-[#0f0f11] border rounded px-2 py-1 text-[#f4f4f5] focus:outline-none transition-colors font-mono ${
+                          varKeyError ? 'border-red-500' : 'border-[#2a2a2e] focus:border-[#6366f1]'
+                        }`}
+                        placeholder="key"
                       />
-                      {usageCount > 0 && (
-                        <span className="text-[9px] text-[#10b981] bg-[#10b981]/10 px-1 py-0.5 rounded flex-shrink-0">
-                          {usageCount} used
-                        </span>
-                      )}
-                      {isUnused && (
-                        <span className="text-[9px] text-[#f59e0b] bg-[#f59e0b]/10 px-1 py-0.5 rounded flex-shrink-0" title="Not used in email">
-                          unused
-                        </span>
-                      )}
+                      <input
+                        type="text"
+                        value={newVarValue}
+                        onChange={(e) => setNewVarValue(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleAddVariable(); }}
+                        className="flex-1 min-w-0 text-[11px] bg-[#0f0f11] border border-[#2a2a2e] rounded px-2 py-1 text-[#f4f4f5] focus:outline-none focus:border-[#6366f1] transition-colors"
+                        placeholder="value"
+                      />
                       <button
-                        onClick={() => removeVariable(key)}
-                        className="text-[#3a3a3e] hover:text-red-400 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                        onClick={handleAddVariable}
+                        disabled={!newVarKey.trim() || !!varKeyError}
+                        className="flex-shrink-0 p-1 rounded bg-[#6366f1] text-white hover:bg-[#818cf8] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       >
-                        <X className="w-3 h-3" />
+                        <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                  );
-                })
+                    {varKeyError && (
+                      <p className="text-[9px] text-red-400 mb-1">{varKeyError}</p>
+                    )}
+                    <p className="text-[9px] text-[#3a3a3e]">Exported HTML keeps raw <code className="text-[#818cf8]">{'{{tags}}'}</code> for your ESP.</p>
+                  </div>
+                </>
               )}
-            </div>
-
-            {/* Add new variable */}
-            <div className="px-3 py-2.5 border-t border-[#2a2a2e] bg-[#161618]">
-              <div className="flex items-center gap-1.5 mb-2">
-                <input
-                  type="text"
-                  value={newVarKey}
-                  onChange={(e) => {
-                    setNewVarKey(e.target.value);
-                    if (varKeyError) setVarKeyError(null); // Clear error when typing
-                  }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddVariable(); }}
-                  className={`flex-1 min-w-0 text-[11px] bg-[#0f0f11] border rounded px-2 py-1 text-[#f4f4f5] focus:outline-none transition-colors placeholder:text-[#3a3a3e] font-mono ${
-                    varKeyError ? 'border-red-500 focus:border-red-500' : 'border-[#2a2a2e] focus:border-[#6366f1]'
-                  }`}
-                  placeholder="key"
-                />
-                <span className="text-[#3a3a3e] text-xs flex-shrink-0">→</span>
-                <input
-                  type="text"
-                  value={newVarValue}
-                  onChange={(e) => setNewVarValue(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddVariable(); }}
-                  className="flex-1 min-w-0 text-[11px] bg-[#0f0f11] border border-[#2a2a2e] rounded px-2 py-1 text-[#f4f4f5] focus:outline-none focus:border-[#6366f1] transition-colors placeholder:text-[#3a3a3e]"
-                  placeholder="sample value"
-                />
-                <button
-                  onClick={handleAddVariable}
-                  disabled={!newVarKey.trim() || !!varKeyError}
-                  className="flex-shrink-0 p-1 rounded bg-[#6366f1] text-white hover:bg-[#818cf8] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                </button>
-              </div>
-              {varKeyError && (
-                <p className="text-[9px] text-red-400 mb-1">{varKeyError}</p>
-              )}
-              <p className="text-[9px] text-[#3a3a3e]">Use alphanumeric + underscore/hyphen. Preview replaces tags with sample values. Exported HTML keeps raw <code className="text-[#818cf8]">{'{{tags}}'}</code> for your ESP.</p>
             </div>
           </div>
         )}
-        </div>
-        <button
-          onClick={() => setImportOpen(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors"
-          title="Import HTML email"
-        >
-          <Upload className="w-3.5 h-3.5" />
-          Import
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div className="w-px h-5 bg-[#2a2a2e] mx-2 flex-shrink-0" />
-
-      {/* Group 4: My Emails + Templates */}
-      <div className="hidden lg:flex items-center gap-0.5 mr-1">
-        <Link
-          href="/emails"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors"
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          My Emails
-        </Link>
-        <Link
-          href="/templates"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[#71717a] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors"
-        >
-          <Layers className="w-3.5 h-3.5" />
-          Templates
-        </Link>
       </div>
 
       {/* Divider */}
@@ -523,27 +529,11 @@ export function TopBar() {
           <Save className="w-3 h-3" />
           {currentDesignId ? 'Save' : 'Save as…'}
         </button>
-        <button
-          onClick={handleCopyHTML}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#222226] border border-[#2a2a2e] text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors"
-        >
-          {copied ? <Check className="w-3 h-3 text-[#10b981]" /> : <Copy className="w-3 h-3" />}
-          {copied ? 'Copied!' : 'Copy HTML'}
-        </button>
-
-        <button
-          onClick={() => setSendTestOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#222226] border border-[#2a2a2e] text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors"
-          title="Send a test email to any address"
-        >
-          <SendHorizonal className="w-3 h-3" />
-          Send test
-        </button>
 
         <div className="relative">
           <button
             data-tour="export"
-            onClick={() => setExportOpen(!exportOpen)}
+            onClick={() => { setExportOpen(!exportOpen); setMoreOpen(false); }}
             disabled={!!exporting}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#6366f1] text-xs text-white font-medium hover:bg-[#818cf8] transition-colors disabled:opacity-60"
           >
@@ -584,6 +574,13 @@ export function TopBar() {
               >
                 <ImageIcon className="w-3.5 h-3.5" />
                 Export as SVG
+              </button>
+              <button
+                onClick={handleExportJSON}
+                className="w-full text-left px-3 py-2 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#222226] transition-colors flex items-center gap-2"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export as JSON
               </button>
               <div className="border-t border-[#2a2a2e] my-1" />
               <button

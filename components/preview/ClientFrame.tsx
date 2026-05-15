@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useEmailStore } from '@/store/email-store';
 import type { ClientMode, EmailDetails } from '@/lib/types';
 
@@ -158,6 +159,21 @@ const CHROME_COMPONENTS: Record<ClientMode, React.FC<ChromeProps>> = {
 
 export function ClientFrame({ children }: { children: React.ReactNode }) {
   const { client, emailDetails } = useEmailStore();
+  const [clientPreviewsEnabled, setClientPreviewsEnabled] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/app-settings')
+      .then((r) => r.json())
+      .then((d: { featureFlags?: { clientPreviews?: boolean } }) => {
+        if (d.featureFlags?.clientPreviews === false) setClientPreviewsEnabled(false);
+      })
+      .catch(() => undefined);
+  }, []);
+
+  if (!clientPreviewsEnabled) {
+    return <div className="flex flex-col h-full overflow-hidden rounded-lg border border-[#2a2a2e] shadow-2xl">{children}</div>;
+  }
+
   const Chrome = CHROME_COMPONENTS[client];
   return <Chrome emailDetails={emailDetails}>{children}</Chrome>;
 }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { trackEvent } from '@/lib/track';
+import { checkUserAccess } from '@/lib/guards';
 
 interface ResendPayload {
   transport: 'resend';
@@ -43,6 +45,8 @@ export async function POST(req: NextRequest) {
   if (userError || !userData.user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
+  const accessError = await checkUserAccess(userData.user.id);
+  if (accessError) return accessError;
 
   const { to, subject, html } = body;
   if (!to || !subject || !html) {
@@ -90,6 +94,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid transport' }, { status: 400 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to send email';
+    const userId = (await (await createServerSupabaseClient())?.auth.getUser())?.data.user?.id ?? null;
+    trackEvent('error.smtp', userId, { error: message, transport: body.transport });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

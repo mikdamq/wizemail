@@ -1,7 +1,29 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(xargs grep -l \"import.*email\\\\|loadSavedDesign\\\\|loadTemplate\")",
+      "Bash(npx tsc *)",
+      "Bash(Get-ChildItem -Path . -Recurse -Depth 2)",
+      "Bash(Select-Object FullName)",
+      "Bash(grep -c \"^  {$\" lib/templates.ts)",
+      "Bash(npm run *)",
+      "Bash(ls \"C:\\\\Users\\\\mikda\\\\.claude\\\\plans\\\\\" 2>/dev/null || echo \"directory not found\")",
+      "Read(//c/Users/mikda/.claude/plans\" 2>/dev/**)",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
+      "Bash(mkdir -p \"c:/Users/mikda/Downloads/Landing Pages/HTML Email Design/wizemail/app/brand-kits/[id]\")",
+      "Bash(cd \"/c/Users/mikda/Downloads/Landing Pages/HTML Email Design/wizemail\" && grep -r \"posthog\\\\|analytics\\\\|gtag\\\\|mixpanel\\\\|segment\" --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.json\" .)",
+      "Bash(mkdir -p \"c:\\\\Users\\\\mikda\\\\Downloads\\\\Landing Pages\\\\HTML Email Design\\\\wizemail\\\\scripts\" && mkdir -p \"c:\\\\Users\\\\mikda\\\\Downloads\\\\Landing Pages\\\\HTML Email Design\\\\wizemail\\\\app\\\\api\\\\templates\\\\[id]\\\\use\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\mikda\\\\Downloads\\\\Landing Pages\\\\HTML Email Design\\\\wizemail\\\\app\\\\api\\\\admin\\\\users\\\\[id]\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\mikda\\\\Downloads\\\\Landing Pages\\\\HTML Email Design\\\\wizemail\\\\app\\\\api\\\\admin\\\\templates\\\\[id]\")",
+      "Bash(npx tsx *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\mikda\\\\Downloads\\\\Landing Pages\\\\HTML Email Design\\\\wizemail\\\\components\\\\builder\" -Recurse -Filter \"*.tsx\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(xargs grep -l \"featureFlags\\\\|aiGeneration\")",
+      "Bash(node -e \"require\\('mjml'\\); console.log\\('mjml ok'\\)\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\mikda\\Downloads\\Landing Pages\\HTML Email Design\\wizemail\\app\\brand-kits"
     ]
   }
 }

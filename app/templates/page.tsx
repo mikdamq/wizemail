@@ -1,9 +1,12 @@
+'use client';
+
+import { AppShell } from '@/components/layout/AppShell';
 import { TemplateGallery } from '@/components/templates/TemplateGallery';
 
-export const metadata = {
-  title: 'Templates — Wizemail',
-};
-
 export default function TemplatesPage() {
-  return <TemplateGallery />;
+  return (
+    <AppShell>
+      <TemplateGallery />
+    </AppShell>
+  );
 }

@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { Toaster } from 'sonner';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEmailStore } from '@/store/email-store';
 import { TopBar } from '@/components/layout/TopBar';
 import { LeftSidebar } from '@/components/builder/LeftSidebar';
@@ -10,13 +12,34 @@ import { CodeEditor } from '@/components/editor/CodeEditor';
 
 export function BuilderApp() {
   const { mode } = useEmailStore();
+  const [leftOpen, setLeftOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(true);
 
   return (
     <div className="flex flex-col h-full bg-[#0f0f11] overflow-hidden">
       <TopBar />
 
       <div className="flex flex-1 overflow-hidden min-h-0">
-        <LeftSidebar />
+        {/* Left sidebar + rail */}
+        <div className="flex flex-shrink-0">
+          {/* Sidebar — clip via maxWidth so inner explicit width still drives resize */}
+          <div
+            className="overflow-hidden transition-[max-width,opacity] duration-200"
+            style={{ maxWidth: leftOpen ? 520 : 0, opacity: leftOpen ? 1 : 0 }}
+          >
+            <LeftSidebar />
+          </div>
+          {/* Slim rail with chevron toggle */}
+          <div className="w-6 flex-shrink-0 bg-[#161618] border-r border-[#2a2a2e] flex items-center justify-center">
+            <button
+              onClick={() => setLeftOpen(!leftOpen)}
+              className="p-0.5 rounded text-[#3a3a3e] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors"
+              title={leftOpen ? 'Collapse left panel' : 'Expand left panel'}
+            >
+              {leftOpen ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            </button>
+          </div>
+        </div>
 
         {/* Center area */}
         <div className="flex flex-1 overflow-hidden min-h-0">
@@ -44,7 +67,26 @@ export function BuilderApp() {
           )}
         </div>
 
-        <RightSidebar />
+        {/* Right sidebar + rail */}
+        <div className="flex flex-shrink-0">
+          {/* Slim rail with chevron toggle */}
+          <div className="w-6 flex-shrink-0 bg-[#161618] border-l border-[#2a2a2e] flex items-center justify-center">
+            <button
+              onClick={() => setRightOpen(!rightOpen)}
+              className="p-0.5 rounded text-[#3a3a3e] hover:text-[#a1a1aa] hover:bg-[#222226] transition-colors"
+              title={rightOpen ? 'Collapse right panel' : 'Expand right panel'}
+            >
+              {rightOpen ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
+            </button>
+          </div>
+          {/* Sidebar — clip via maxWidth so inner w-64 still works */}
+          <div
+            className="overflow-hidden transition-[max-width,opacity] duration-200"
+            style={{ maxWidth: rightOpen ? 520 : 0, opacity: rightOpen ? 1 : 0 }}
+          >
+            <RightSidebar />
+          </div>
+        </div>
       </div>
 
       <Toaster

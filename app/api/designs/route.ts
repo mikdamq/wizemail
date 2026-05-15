@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { trackEvent } from '@/lib/track';
+import { checkUserAccess } from '@/lib/guards';
 import type { CloudDesignPayload } from '@/lib/cloud-designs';
 import type { Database } from '@/lib/supabase/database.types';
 
@@ -28,6 +30,8 @@ export async function GET() {
   if (userError || !userData.user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
+  const accessError = await checkUserAccess(userData.user.id);
+  if (accessError) return accessError;
 
   const { data, error } = await supabase
     .from('designs')
@@ -49,6 +53,8 @@ export async function POST(request: NextRequest) {
   if (userError || !userData.user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
+  const accessError = await checkUserAccess(userData.user.id);
+  if (accessError) return accessError;
 
   let body: CloudDesignPayload;
   try {
@@ -100,6 +106,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      trackEvent('design.saved', userData.user.id, { designId: body.id });
       return NextResponse.json({ design: toSavedDesign(data) });
     }
   }
@@ -123,5 +130,6 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  trackEvent('design.created', userData.user.id, { designId: data.id });
   return NextResponse.json({ design: toSavedDesign(data) }, { status: 201 });
 }

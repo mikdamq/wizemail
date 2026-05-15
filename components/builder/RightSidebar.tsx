@@ -293,14 +293,31 @@ function ImageUploadField({ value, onChange }: { value?: string; onChange: (v: s
   );
 }
 
+/* ─── feature flags hook ───────────────────────────────────── */
+
+function useAiEnabled(): boolean {
+  const [enabled, setEnabled] = useState(true);
+  useEffect(() => {
+    fetch('/api/app-settings')
+      .then((r) => r.json())
+      .then((d: { featureFlags?: { aiGeneration?: boolean } }) => {
+        if (d.featureFlags?.aiGeneration === false) setEnabled(false);
+      })
+      .catch(() => {});
+  }, []);
+  return enabled;
+}
+
 /* ─── section-specific controls ───────────────────────────── */
 
 function ControlsForType({ type, content, onUpdate }: { type: SectionType; content: SectionContent; onUpdate: (c: SectionContent) => void }) {
   const u = (key: keyof SectionContent) => (v: any) => onUpdate({ ...content, [key]: v });
+  const aiEnabled = useAiEnabled();
 
   // AI button component
   function AiBtn({ field, updateKey }: { field: string; updateKey: keyof SectionContent }) {
     const [loading, setLoading] = useState(false);
+    if (!aiEnabled) return null;
 
     const generate = async () => {
       setLoading(true);
@@ -308,7 +325,7 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
         const res = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ field, type, content }),
+          body: JSON.stringify({ field, sectionType: type, ...content }),
         });
         const data = await res.json();
         if (!res.ok || !data.text) {
@@ -417,7 +434,7 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
         return (
           <>
             <CollapsibleGroup title="Headline" defaultOpen={true}>
-              <TextField label="Section title" value={content.headline} onChange={u('headline')} />
+              <TextField label="Section title" value={content.headline} onChange={u('headline')} aiButton={<AiBtn field="headline" updateKey="headline" />} />
             </CollapsibleGroup>
             <CollapsibleGroup title="Items" defaultOpen={true}>
               <div className="space-y-2">
@@ -451,9 +468,9 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
 
       {type === 'testimonial' && (
         <CollapsibleGroup title="Quote" defaultOpen={true}>
-          <TextField label="Quote" value={content.quoteText} onChange={u('quoteText')} multiline />
-          <TextField label="Author name" value={content.authorName} onChange={u('authorName')} />
-          <TextField label="Author title" value={content.authorTitle} onChange={u('authorTitle')} />
+          <TextField label="Quote" value={content.quoteText} onChange={u('quoteText')} multiline aiButton={<AiBtn field="quoteText" updateKey="quoteText" />} />
+          <TextField label="Author name" value={content.authorName} onChange={u('authorName')} aiButton={<AiBtn field="authorName" updateKey="authorName" />} />
+          <TextField label="Author title" value={content.authorTitle} onChange={u('authorTitle')} aiButton={<AiBtn field="authorTitle" updateKey="authorTitle" />} />
         </CollapsibleGroup>
       )}
 
@@ -506,6 +523,7 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
               onChange={u('listItems')}
               multiline
               placeholder={"First item\nSecond item\nThird item"}
+              aiButton={<AiBtn field="listItems" updateKey="listItems" />}
             />
             <div className="flex flex-col gap-1">
               <label className="text-[11px] text-[#71717a]">Style</label>
@@ -559,8 +577,8 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
       {type === 'product-card' && (
         <>
           <CollapsibleGroup title="Product" defaultOpen={true}>
-            <TextField label="Name" value={content.headline} onChange={u('headline')} />
-            <TextField label="Description" value={content.bodyText} onChange={u('bodyText')} multiline />
+            <TextField label="Name" value={content.headline} onChange={u('headline')} aiButton={<AiBtn field="headline" updateKey="headline" />} />
+            <TextField label="Description" value={content.bodyText} onChange={u('bodyText')} multiline aiButton={<AiBtn field="body" updateKey="bodyText" />} />
             <TextField label="Price" value={content.productPrice} onChange={u('productPrice')} placeholder="$99.00" />
           </CollapsibleGroup>
           <CollapsibleGroup title="Image">
@@ -568,7 +586,7 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
             <TextField label="Alt text" value={content.imageAlt} onChange={u('imageAlt')} placeholder="Describe the image" />
           </CollapsibleGroup>
           <CollapsibleGroup title="Button">
-            <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} />
+            <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} aiButton={<AiBtn field="buttonText" updateKey="buttonText" />} />
             <TextField label="Button URL" value={content.buttonUrl} onChange={u('buttonUrl')} />
             <ColorField label="Button color" value={content.buttonColor} onChange={u('buttonColor')} />
             <ColorField label="Text color" value={content.buttonTextColor} onChange={u('buttonTextColor')} />
@@ -582,7 +600,7 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
 
       {type === 'header' && (
         <CollapsibleGroup title="Brand" defaultOpen={true}>
-          <TextField label="Logo text" value={content.logoText} onChange={u('logoText')} placeholder="Your Brand" />
+          <TextField label="Logo text" value={content.logoText} onChange={u('logoText')} placeholder="Your Brand" aiButton={<AiBtn field="logoText" updateKey="logoText" />} />
           <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
           <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
         </CollapsibleGroup>
@@ -605,7 +623,7 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
       {type === 'button-row' && (
         <>
           <CollapsibleGroup title="Button" defaultOpen={true}>
-            <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} placeholder="Click here" />
+            <TextField label="Button text" value={content.buttonText} onChange={u('buttonText')} placeholder="Click here" aiButton={<AiBtn field="buttonText" updateKey="buttonText" />} />
             <TextField label="Button URL" value={content.buttonUrl} onChange={u('buttonUrl')} placeholder="https://…" />
           </CollapsibleGroup>
           <CollapsibleGroup title="Colors">
@@ -1003,7 +1021,7 @@ export function RightSidebar() {
     : '';
 
   return (
-    <div data-tour="inspector" className="w-64 flex-shrink-0 bg-[#161618] border-l border-[#2a2a2e] flex flex-col overflow-hidden">
+    <div data-tour="inspector" className="w-64 flex-shrink-0 bg-[#161618] flex flex-col overflow-hidden">
       {/* Tab bar */}
       <div className="px-2 py-2 border-b border-[#2a2a2e] flex-shrink-0">
         <div className="flex items-center gap-0.5 bg-[#0f0f11] rounded-lg p-0.5">

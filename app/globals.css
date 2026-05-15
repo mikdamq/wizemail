@@ -1,24 +1,65 @@
 @import "tailwindcss";
 
-@theme {
-  --color-surface: #161618;
-  --color-elevated: #1c1c1f;
-  --color-overlay: #222226;
-  --color-border: #2a2a2e;
-  --color-accent: #6366f1;
-  --color-accent-light: #818cf8;
-  --color-muted: #71717a;
-}
-
-html {
+/* ── Theme tokens (site pages only — builder always uses dark) ── */
+:root,
+[data-theme="dark"] {
+  --bg:           #110F0C;
+  --surface:      #1A1814;
+  --elevated:     #221F1A;
+  --overlay:      #2A2620;
+  --border:       #2E2B26;
+  --text:         #F5F0E8;
+  --text-muted:   #9C9488;
+  --text-subtle:  #6B6358;
+  --accent:       #E85D26;
+  --accent-light: #F07A4A;
+  --accent-dim:   rgba(232, 93, 38, 0.15);
+  --success:      #10b981;
+  --warning:      #f59e0b;
+  --danger:       #f87171;
   color-scheme: dark;
 }
 
-body {
-  background: #0f0f11;
-  color: #f4f4f5;
+[data-theme="light"] {
+  --bg:           #FAF8F3;
+  --surface:      #F2EFE8;
+  --elevated:     #EAE7DE;
+  --overlay:      #E0DDD4;
+  --border:       #DDD8CE;
+  --text:         #111009;
+  --text-muted:   #706A5F;
+  --text-subtle:  #A09890;
+  --accent:       #C1440E;
+  --accent-light: #D4572A;
+  --accent-dim:   rgba(193, 68, 14, 0.12);
+  --success:      #059669;
+  --warning:      #d97706;
+  --danger:       #dc2626;
+  color-scheme: light;
 }
 
+/* ── Tailwind theme registration ── */
+@theme {
+  --color-surface:      var(--surface);
+  --color-elevated:     var(--elevated);
+  --color-overlay:      var(--overlay);
+  --color-border:       var(--border);
+  --color-accent:       var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-muted:        var(--text-muted);
+}
+
+/* ── Base ── */
+html {
+  font-family: var(--font-ibm-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -27,14 +68,39 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2e;
+  background: var(--border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a3e;
+  background: var(--overlay);
 }
 
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Auth page animations ── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease both;
 }

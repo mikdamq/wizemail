@@ -501,7 +501,7 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
     }),
 
   loadTemplate: (template) =>
-    set({
+    set((state) => ({
       rows: sectionsToRows(template.sections),
       past: [],
       future: [],
@@ -513,7 +513,10 @@ export const useEmailStore = create<EmailStore>((set, get) => ({
       currentDesignName: '',
       currentDesignVersion: null,
       hasUnsavedChanges: false,
-    }),
+      ...(template.direction != null
+        ? { brandKit: { ...state.brandKit, direction: template.direction } }
+        : {}),
+    })),
 
   loadSavedDesign: (design) => {
     const variables = design.variables ?? {};

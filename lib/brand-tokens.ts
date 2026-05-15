@@ -11,6 +11,26 @@ export const BRAND_TOKEN_NAMES = [
   '$custom5', '$custom6', '$custom7', '$custom8',
 ] as const;
 
+export const DEFAULT_LABELS: Record<string, string> = {
+  '$primary':    'Primary',
+  '$secondary':  'Secondary',
+  '$background': 'Background',
+  '$text':       'Text',
+  '$custom1':    'Custom 1',
+  '$custom2':    'Custom 2',
+  '$custom3':    'Custom 3',
+  '$custom4':    'Custom 4',
+  '$custom5':    'Custom 5',
+  '$custom6':    'Custom 6',
+  '$custom7':    'Custom 7',
+  '$custom8':    'Custom 8',
+};
+
+/** Return the user-facing label for a token, falling back to the default. */
+export function getTokenLabel(token: string, brandKit: BrandKit): string {
+  return brandKit.labels?.[token] ?? DEFAULT_LABELS[token] ?? token;
+}
+
 export type BrandTokenName = typeof BRAND_TOKEN_NAMES[number];
 
 /**

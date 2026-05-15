@@ -4,13 +4,30 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, ArrowLeft, Layers, X, ChevronRight } from 'lucide-react';
-import { TEMPLATES, MAIN_CATEGORY_DEFS, getSubCategoryLabel } from '@/lib/templates';
+import { MAIN_CATEGORY_DEFS, getSubCategoryLabel } from '@/lib/templates';
 import { getTemplateAccess, getTemplateCollection, isFeaturedTemplate } from '@/lib/template-marketplace';
 import { assembleCleanHTML, sectionsToRows } from '@/lib/email-utils';
 import { useEmailStore } from '@/store/email-store';
 import { canUsePremiumTemplates } from '@/lib/plans';
-import type { MainCategory, EmailTemplate } from '@/lib/templates';
+import type { MainCategory, EmailTemplate, TemplateSectionDef } from '@/lib/templates';
 import type { SubscriptionPlan } from '@/lib/supabase/database.types';
+
+// Map a DB row back to the EmailTemplate shape used throughout the app
+function dbRowToTemplate(row: Record<string, unknown>): EmailTemplate {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    description: row.description as string,
+    mainCategory: row.main_category as MainCategory,
+    subCategory: row.sub_category as string,
+    accentColor: row.accent_color as string,
+    access: row.access as 'free' | 'premium',
+    featured: row.featured as boolean,
+    collection: (row.collection as 'seasonal' | 'launch' | 'sales' | 'lifecycle' | null) ?? undefined,
+    direction: (row.direction as 'ltr' | 'rtl') ?? 'ltr',
+    sections: row.sections as TemplateSectionDef[],
+  };
+}
 
 function TemplatePreview({ template }: { template: EmailTemplate }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -143,6 +160,19 @@ function PreviewModal({ template, onClose, onUse }: {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="flex flex-col rounded-xl bg-[#161618] border border-[#2a2a2e] overflow-hidden animate-pulse">
+      <div className="bg-[#222226] h-[200px]" />
+      <div className="p-3.5 space-y-2">
+        <div className="h-3 bg-[#2a2a2e] rounded w-3/4" />
+        <div className="h-2 bg-[#222226] rounded w-full" />
+        <div className="h-2 bg-[#222226] rounded w-2/3" />
+      </div>
+    </div>
+  );
+}
+
 export function TemplateGallery() {
   const router = useRouter();
   const { loadTemplate } = useEmailStore();
@@ -151,12 +181,34 @@ export function TemplateGallery() {
   const [activeShelf, setActiveShelf] = useState<'all' | 'featured' | 'premium'>('all');
   const [plan, setPlan] = useState<SubscriptionPlan>('free');
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [marketplaceEnabled, setMarketplaceEnabled] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/app-settings')
+      .then((r) => r.json())
+      .then((d: { featureFlags?: { templateMarketplace?: boolean } }) => {
+        if (d.featureFlags?.templateMarketplace === false) setMarketplaceEnabled(false);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     fetch('/api/subscription')
-      .then((response) => response.json())
+      .then((r) => r.json())
       .then((data: { plan?: SubscriptionPlan }) => setPlan(data.plan ?? 'free'))
       .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/templates')
+      .then((r) => r.json())
+      .then((data: { templates: Record<string, unknown>[] }) => {
+        setTemplates((data.templates ?? []).map(dbRowToTemplate));
+      })
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSetMain = (cat: MainCategory | 'all') => {
@@ -168,7 +220,7 @@ export function TemplateGallery() {
     ? MAIN_CATEGORY_DEFS.find((c) => c.id === activeMain)
     : null;
 
-  const filtered = TEMPLATES.filter((t) => {
+  const filtered = templates.filter((t) => {
     const mainMatch = activeMain === 'all' || t.mainCategory === activeMain;
     const subMatch = activeSub === 'all' || t.subCategory === activeSub;
     const shelfMatch =
@@ -183,9 +235,23 @@ export function TemplateGallery() {
       router.push('/billing');
       return;
     }
+    // Track usage (fire-and-forget)
+    fetch(`/api/templates/${template.id}/use`, { method: 'POST' }).catch(() => undefined);
     loadTemplate(template);
     router.push('/builder');
   };
+
+  if (!marketplaceEnabled) {
+    return (
+      <div className="h-full bg-[#0f0f11] flex flex-col items-center justify-center gap-4">
+        <Layers className="w-10 h-10 text-[#3a3a3e]" />
+        <div className="text-center">
+          <p className="text-sm font-medium text-[#71717a]">Template gallery coming soon</p>
+          <p className="text-xs text-[#3a3a3e] mt-1">This feature is not yet available.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full bg-[#0f0f11] flex flex-col">
@@ -222,11 +288,11 @@ export function TemplateGallery() {
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-[#f4f4f5] tracking-tight mb-1">Email Templates</h1>
             <p className="text-[#71717a] text-sm">
-              {TEMPLATES.length} templates across {MAIN_CATEGORY_DEFS.length} categories. Click any template to preview it, then use it as a starting point.
+              {loading ? 'Loading templates…' : `${templates.length} templates across ${MAIN_CATEGORY_DEFS.length} categories. Click any template to preview it, then use it as a starting point.`}
             </p>
           </div>
 
-          {/* Main category tabs — wrap naturally */}
+          {/* Shelf filters */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
             {([
               { id: 'all', label: 'All curated' },
@@ -247,6 +313,7 @@ export function TemplateGallery() {
             ))}
           </div>
 
+          {/* Main category tabs */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <button
               onClick={() => handleSetMain('all')}
@@ -257,10 +324,10 @@ export function TemplateGallery() {
               }`}
             >
               All templates
-              <span className="ml-1.5 text-[10px] opacity-60">{TEMPLATES.length}</span>
+              <span className="ml-1.5 text-[10px] opacity-60">{templates.length}</span>
             </button>
             {MAIN_CATEGORY_DEFS.map((cat) => {
-              const count = TEMPLATES.filter((t) => t.mainCategory === cat.id).length;
+              const count = templates.filter((t) => t.mainCategory === cat.id).length;
               const isActive = activeMain === cat.id;
               return (
                 <button
@@ -280,18 +347,16 @@ export function TemplateGallery() {
             })}
           </div>
 
-          {/* Subcategory pills — wrap naturally */}
+          {/* Subcategory pills */}
           {activeDef ? (
             <div className="flex flex-wrap items-center gap-1.5 mb-6">
               <button
                 onClick={() => setActiveSub('all')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                  activeSub === 'all' ? '' : 'bg-[#161618] text-[#71717a] hover:text-[#a1a1aa]'
-                }`}
+                className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
                 style={
                   activeSub === 'all'
                     ? { backgroundColor: `${activeDef.color}18`, color: activeDef.color, outline: `1px solid ${activeDef.color}35` }
-                    : { outline: '1px solid #2a2a2e' }
+                    : { outline: '1px solid #2a2a2e', background: '#161618', color: '#71717a' }
                 }
               >
                 All
@@ -302,13 +367,11 @@ export function TemplateGallery() {
                   <button
                     key={sub.id}
                     onClick={() => setActiveSub(sub.id)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                      isActive ? '' : 'bg-[#161618] text-[#71717a] hover:text-[#a1a1aa]'
-                    }`}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
                     style={
                       isActive
                         ? { backgroundColor: `${activeDef.color}18`, color: activeDef.color, outline: `1px solid ${activeDef.color}35` }
-                        : { outline: '1px solid #2a2a2e' }
+                        : { outline: '1px solid #2a2a2e', background: '#161618', color: '#71717a' }
                     }
                   >
                     {sub.label}
@@ -321,7 +384,11 @@ export function TemplateGallery() {
           )}
 
           {/* Template grid */}
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="flex items-center justify-center py-24 text-center">
               <p className="text-sm text-[#3a3a3e]">No templates found for this filter.</p>
             </div>
@@ -338,7 +405,6 @@ export function TemplateGallery() {
                     onClick={() => setPreviewTemplate(template)}
                     className="group flex flex-col rounded-xl bg-[#161618] border border-[#2a2a2e] hover:border-[#6366f1]/40 overflow-hidden transition-all duration-150 hover:shadow-xl hover:shadow-black/30 cursor-pointer"
                   >
-                    {/* Preview thumbnail */}
                     <div className="relative overflow-hidden bg-[#e8eaf0] border-b border-[#2a2a2e]">
                       <TemplatePreview template={template} />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-150 flex items-center justify-center">
@@ -348,7 +414,6 @@ export function TemplateGallery() {
                       </div>
                     </div>
 
-                    {/* Card info */}
                     <div className="p-3.5 flex-1 flex flex-col">
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <p className="text-xs font-semibold text-[#f4f4f5] leading-tight">{template.name}</p>
@@ -379,7 +444,6 @@ export function TemplateGallery() {
         </div>
       </div>
 
-      {/* Full preview modal */}
       {previewTemplate && (
         <PreviewModal
           template={previewTemplate}

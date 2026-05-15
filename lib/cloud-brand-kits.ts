@@ -25,3 +25,8 @@ export async function saveCloudBrandKit(name: string, kit: BrandKit, id?: string
   const data = (await response.json()) as { brandKit: SavedBrandKit };
   return data.brandKit;
 }
+
+export async function deleteCloudBrandKit(id: string): Promise<boolean> {
+  const response = await fetch(`/api/brand-kits?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+  return response.ok;
+}

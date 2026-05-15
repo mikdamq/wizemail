@@ -7,6 +7,8 @@ export interface BrandKit {
   fontFamily: string;
   customColors?: string[];
   direction?: 'ltr' | 'rtl';
+  /** Mutable display labels per token. Token IDs ($primary etc.) never change. */
+  labels?: Partial<Record<string, string>>;
 }
 
 export type SectionType =

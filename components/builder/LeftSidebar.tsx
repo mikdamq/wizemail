@@ -17,7 +17,8 @@ import { useEmailStore } from '@/store/email-store';
 import { getSectionLabel } from '@/lib/sections';
 import { ComponentBrowser, type BrowserMode } from '@/components/builder/ComponentBrowser';
 import { saveBlock, getSavedBlocks, deleteBlock } from '@/lib/storage';
-import { listCloudBrandKits, saveCloudBrandKit, type SavedBrandKit } from '@/lib/cloud-brand-kits';
+import { listCloudBrandKits, type SavedBrandKit } from '@/lib/cloud-brand-kits';
+import Link from 'next/link';
 import type { EmailColumn, EmailRow, SectionType, SavedBlock } from '@/lib/types';
 
 /* ─── Details Panel ─────────────────────────────────────── */
@@ -58,224 +59,124 @@ function DetailsPanel() {
 /* ─── Brand Kit Panel ───────────────────────────────────── */
 
 function BrandKitPanel() {
-  const { brandKit, updateBrandKit, applyBrandKitToAll } = useEmailStore();
-  const [savedKits, setSavedKits] = useState<SavedBrandKit[]>([]);
-  const [previewKit, setPreviewKit] = useState<SavedBrandKit | null>(null);
-  const [saving, setSaving] = useState(false);
+  const { updateBrandKit, applyBrandKitToAll } = useEmailStore();
+  const [kits, setKits] = useState<SavedBrandKit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
-    listCloudBrandKits().then(setSavedKits).catch(() => undefined);
+    listCloudBrandKits().then((list) => { setKits(list); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  const handleSaveKit = async () => {
-    setSaving(true);
-    const saved = await saveCloudBrandKit(brandKit.logoText || 'Brand kit', brandKit);
-    setSaving(false);
-    if (saved) {
-      setSavedKits((kits) => [saved, ...kits.filter((kit) => kit.id !== saved.id)]);
-    }
+  const selectedKit = kits.find((k) => k.id === selectedId) ?? null;
+
+  const handleApply = () => {
+    if (!selectedKit) return;
+    updateBrandKit(selectedKit.kit);
+    toast.success(`"${selectedKit.name}" applied`);
   };
 
-  const colorField = (label: string, key: keyof typeof brandKit) => (
-    <div className="flex items-center justify-between gap-3">
-      <label className="text-[11px] text-[#71717a] flex-1">{label}</label>
-      <div className="flex items-center gap-1.5">
-        <div className="w-5 h-5 rounded border border-[#2a2a2e] overflow-hidden flex-shrink-0">
-          <input
-            type="color"
-            value={typeof brandKit[key] === 'string' ? (brandKit[key] as string) : '#000000'}
-            onChange={(e) => updateBrandKit({ [key]: e.target.value })}
-            className="w-6 h-6 -translate-x-0.5 -translate-y-0.5 cursor-pointer border-0 p-0 bg-transparent"
-          />
-        </div>
-        <input
-          type="text"
-          value={typeof brandKit[key] === 'string' ? (brandKit[key] as string) : ''}
-          onChange={(e) => updateBrandKit({ [key]: e.target.value })}
-          className="w-20 text-[11px] font-mono bg-[#0f0f11] border border-[#2a2a2e] rounded px-1.5 py-0.5 text-[#a1a1aa] focus:outline-none focus:border-[#6366f1] transition-colors"
-          placeholder="#000000"
-        />
-      </div>
-    </div>
-  );
+  const handleApplyToAll = () => {
+    if (!selectedKit) return;
+    updateBrandKit(selectedKit.kit);
+    applyBrandKitToAll();
+    toast.success('Brand applied to all sections');
+  };
 
-  const FONT_OPTIONS = [
-    { value: 'system', label: 'System UI' },
-    { value: 'Arial, Helvetica, sans-serif', label: 'Arial' },
-    { value: 'Georgia, serif', label: 'Georgia' },
-    { value: 'Trebuchet MS, sans-serif', label: 'Trebuchet' },
-    { value: "'Times New Roman', serif", label: 'Times New Roman' },
-    { value: 'Verdana, sans-serif', label: 'Verdana' },
-  ];
-
-  return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-3">
-      <div className="rounded-lg bg-[#6366f1]/5 border border-[#6366f1]/15 px-3 py-2 mb-3">
-        <p className="text-[10px] text-[#818cf8] leading-relaxed">New sections auto-use brand tokens. Click "Apply to all" to convert existing sections.</p>
-      </div>
-      <div className="flex gap-2">
-        <button
-          onClick={handleSaveKit}
-          disabled={saving}
-          className="flex-1 rounded-lg bg-[#222226] border border-[#2a2a2e] px-3 py-2 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] disabled:opacity-60 transition-colors"
-        >
-          {saving ? 'Saving...' : 'Save to cloud'}
-        </button>
-        <button
-          onClick={() => { applyBrandKitToAll(); toast.success('Brand colors applied to all sections'); }}
-          className="flex items-center gap-1.5 rounded-lg bg-[#222226] border border-[#2a2a2e] px-3 py-2 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors flex-shrink-0"
-          title="Convert matching hex colors to brand tokens"
-        >
-          <RefreshCw className="w-3 h-3" />
-          Apply to all
-        </button>
-      </div>
-      {savedKits.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] font-medium text-[#71717a] uppercase tracking-wider">Saved kits</p>
-          {savedKits.slice(0, 4).map((kit) => (
-            <div key={kit.id} className="rounded-lg border border-[#2a2a2e] bg-[#1c1c1f] p-2">
-              <div className="flex items-center justify-between gap-2">
-                <button
-                  onMouseEnter={() => setPreviewKit(kit)}
-                  onMouseLeave={() => setPreviewKit(null)}
-                  onFocus={() => setPreviewKit(kit)}
-                  onBlur={() => setPreviewKit(null)}
-                  onClick={() => updateBrandKit(kit.kit)}
-                  className="flex-1 text-left"
-                >
-                  <p className="text-[11px] font-semibold text-[#f4f4f5] truncate">{kit.name}</p>
-                  <div className="mt-1 flex gap-1">
-                    {[kit.kit.primaryColor, kit.kit.secondaryColor, kit.kit.backgroundColor, kit.kit.textColor].map((color, index) => (
-                      <span key={`${kit.id}-${index}`} className="h-3 w-5 rounded border border-[#2a2a2e]" style={{ backgroundColor: color }} />
-                    ))}
-                  </div>
-                </button>
-                <button
-                  onClick={() => updateBrandKit(kit.kit)}
-                  className="px-2 py-1 rounded bg-[#6366f1]/10 text-[#818cf8] text-[10px] hover:bg-[#6366f1]/20 transition-colors"
-                >
-                  Apply
-                </button>
-              </div>
-              {previewKit?.id === kit.id && (
-                <div className="mt-2 rounded-md border border-[#2a2a2e] p-2" style={{ backgroundColor: kit.kit.backgroundColor }}>
-                  <p className="text-[10px] font-semibold" style={{ color: kit.kit.textColor }}>{kit.kit.logoText || kit.name}</p>
-                  <span className="mt-1 inline-block rounded px-2 py-1 text-[9px]" style={{ backgroundColor: kit.kit.primaryColor, color: '#ffffff' }}>
-                    Button style
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="space-y-1">
-        <p className="text-[10px] font-medium text-[#71717a] uppercase tracking-wider">Colors</p>
-      </div>
-      <div className="space-y-3">
-        {colorField('Primary (buttons)', 'primaryColor')}
-        {colorField('Secondary (dark BG)', 'secondaryColor')}
-        {colorField('Background', 'backgroundColor')}
-        {colorField('Text', 'textColor')}
-      </div>
-      <div className="border-t border-[#2a2a2e] pt-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-medium text-[#71717a] uppercase tracking-wider">Custom colors</p>
-          {(brandKit.customColors?.length ?? 0) < 8 && (
-            <button
-              onClick={() => updateBrandKit({ customColors: [...(brandKit.customColors ?? []), '#888888'] })}
-              className="flex items-center gap-1 text-[10px] text-[#818cf8] hover:text-[#6366f1] transition-colors"
-            >
-              <Plus className="w-3 h-3" /> Add
-            </button>
-          )}
-        </div>
-        {(brandKit.customColors ?? []).length === 0 && (
-          <p className="text-[10px] text-[#3a3a3e]">No custom colors yet. Add up to 8.</p>
-        )}
-        {(brandKit.customColors ?? []).map((color, idx) => (
-          <div key={idx} className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-mono text-[#71717a] flex-shrink-0 w-16">${`custom${idx + 1}`}</span>
-            <div className="flex items-center gap-1.5 flex-1">
-              <div className="w-5 h-5 rounded border border-[#2a2a2e] overflow-hidden flex-shrink-0">
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => {
-                    const next = [...(brandKit.customColors ?? [])];
-                    next[idx] = e.target.value;
-                    updateBrandKit({ customColors: next });
-                  }}
-                  className="w-6 h-6 -translate-x-0.5 -translate-y-0.5 cursor-pointer border-0 p-0 bg-transparent"
-                />
-              </div>
-              <input
-                type="text"
-                value={color}
-                onChange={(e) => {
-                  const next = [...(brandKit.customColors ?? [])];
-                  next[idx] = e.target.value;
-                  updateBrandKit({ customColors: next });
-                }}
-                className="flex-1 text-[11px] font-mono bg-[#0f0f11] border border-[#2a2a2e] rounded px-1.5 py-0.5 text-[#a1a1aa] focus:outline-none focus:border-[#6366f1] transition-colors"
-              />
-              <button
-                onClick={() => {
-                  const next = (brandKit.customColors ?? []).filter((_, i) => i !== idx);
-                  updateBrandKit({ customColors: next });
-                }}
-                className="text-[#71717a] hover:text-red-400 transition-colors flex-shrink-0"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
+  if (loading) {
+    return (
+      <div className="flex-1 p-3 space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-14 rounded-lg animate-pulse bg-[#1c1c1f]" />
         ))}
       </div>
-      <div className="border-t border-[#2a2a2e] pt-3 space-y-3">
-        <p className="text-[10px] font-medium text-[#71717a] uppercase tracking-wider">Identity</p>
-        <div className="space-y-1">
-          <label className="text-[11px] text-[#71717a]">Logo / company name</label>
-          <input
-            type="text"
-            value={brandKit.logoText}
-            onChange={(e) => updateBrandKit({ logoText: e.target.value })}
-            placeholder="Acme Inc."
-            className="w-full bg-[#1c1c1f] border border-[#2a2a2e] rounded-md px-2.5 py-1.5 text-xs text-[#f4f4f5] placeholder-[#3a3a3e] focus:outline-none focus:border-[#6366f1]/60 transition-colors"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-[11px] text-[#71717a]">Default font</label>
-          <select
-            value={brandKit.fontFamily}
-            onChange={(e) => updateBrandKit({ fontFamily: e.target.value })}
-            className="w-full bg-[#1c1c1f] border border-[#2a2a2e] rounded-md px-2.5 py-1.5 text-xs text-[#f4f4f5] focus:outline-none focus:border-[#6366f1]/60 transition-colors"
-          >
-            {FONT_OPTIONS.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
-          </select>
-        </div>
+    );
+  }
 
-        {/* Text direction toggle */}
-        <div className="space-y-1">
-          <label className="text-[11px] text-[#71717a]">Text direction</label>
-          <div className="flex rounded-md overflow-hidden border border-[#2a2a2e]">
-            <button
-              onClick={() => updateBrandKit({ direction: 'ltr' })}
-              className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${(brandKit.direction ?? 'ltr') === 'ltr' ? 'bg-[#6366f1] text-white' : 'bg-[#1c1c1f] text-[#71717a] hover:text-[#f4f4f5]'}`}
-            >
-              LTR
-            </button>
-            <button
-              onClick={() => updateBrandKit({ direction: 'rtl' })}
-              className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${brandKit.direction === 'rtl' ? 'bg-[#6366f1] text-white' : 'bg-[#1c1c1f] text-[#71717a] hover:text-[#f4f4f5]'}`}
-            >
-              RTL
-            </button>
-          </div>
+  if (kits.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-5 text-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-[#1c1c1f] border border-[#2a2a2e] flex items-center justify-center">
+          <Palette className="w-5 h-5 text-[#52525b]" />
         </div>
+        <div>
+          <p className="text-xs font-medium text-[#a1a1aa]">No brand kits yet</p>
+          <p className="text-[10px] text-[#52525b] mt-1 leading-relaxed">Create a kit to define your colors, fonts, and design tokens.</p>
+        </div>
+        <Link
+          href="/brand-kits"
+          target="_blank"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/20 text-xs text-[#818cf8] hover:bg-[#6366f1]/20 transition-colors"
+        >
+          <Plus className="w-3 h-3" />
+          Create a kit
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+      {/* Info hint */}
+      <div className="rounded-lg bg-[#6366f1]/5 border border-[#6366f1]/15 px-3 py-2">
+        <p className="text-[10px] text-[#818cf8] leading-relaxed">Pick a kit and apply it. New sections use brand tokens automatically.</p>
+      </div>
+
+      {/* Kit list */}
+      <div className="space-y-1.5">
+        {kits.map((kit) => {
+          const swatches = [kit.kit.primaryColor, kit.kit.secondaryColor, kit.kit.backgroundColor, kit.kit.textColor, ...(kit.kit.customColors ?? [])].slice(0, 5);
+          const isSelected = selectedId === kit.id;
+          return (
+            <button
+              key={kit.id}
+              onClick={() => setSelectedId(isSelected ? null : kit.id)}
+              className={`w-full text-left rounded-lg border p-2.5 transition-all ${
+                isSelected
+                  ? 'bg-[#6366f1]/10 border-[#6366f1]/40'
+                  : 'bg-[#1c1c1f] border-[#2a2a2e] hover:border-[#3a3a3e]'
+              }`}
+            >
+              <p className={`text-[11px] font-semibold truncate ${isSelected ? 'text-[#818cf8]' : 'text-[#f4f4f5]'}`}>{kit.name}</p>
+              <div className="mt-1.5 flex gap-1">
+                {swatches.map((color, i) => (
+                  <span key={i} className="h-3 w-5 rounded-sm border border-white/10 flex-shrink-0" style={{ backgroundColor: color }} />
+                ))}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Action buttons */}
+      {selectedKit && (
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={handleApply}
+            className="flex-1 rounded-lg bg-[#6366f1]/10 border border-[#6366f1]/20 px-3 py-2 text-xs text-[#818cf8] hover:bg-[#6366f1]/20 transition-colors font-medium"
+          >
+            Apply kit
+          </button>
+          <button
+            onClick={handleApplyToAll}
+            className="flex items-center gap-1.5 rounded-lg bg-[#222226] border border-[#2a2a2e] px-3 py-2 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3a3a3e] transition-colors flex-shrink-0"
+            title="Apply kit and convert existing sections to brand tokens"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Apply to all
+          </button>
+        </div>
+      )}
+
+      {/* Manage link */}
+      <div className="pt-1 border-t border-[#2a2a2e]">
+        <Link
+          href="/brand-kits"
+          target="_blank"
+          className="text-[10px] text-[#52525b] hover:text-[#818cf8] transition-colors"
+        >
+          Manage brand kits →
+        </Link>
       </div>
     </div>
   );
@@ -639,7 +540,7 @@ export function LeftSidebar() {
 
   if (browserMode !== null) {
     return (
-      <div className="flex-shrink-0 bg-[#161618] border-r border-[#2a2a2e] flex flex-col overflow-hidden relative" style={{ width: sidebarWidth }}>
+      <div className="flex-shrink-0 bg-[#161618] flex flex-col overflow-hidden relative" style={{ width: sidebarWidth }}>
         <ComponentBrowser
           mode={browserMode}
           onClose={() => setBrowserMode(null)}
@@ -654,7 +555,7 @@ export function LeftSidebar() {
 
   if (showBlocks) {
     return (
-      <div className="flex-shrink-0 bg-[#161618] border-r border-[#2a2a2e] flex flex-col overflow-hidden relative" style={{ width: sidebarWidth }}>
+      <div className="flex-shrink-0 bg-[#161618] flex flex-col overflow-hidden relative" style={{ width: sidebarWidth }}>
         <SavedBlocksPanel onClose={() => setShowBlocks(false)} />
         <div onPointerDown={handleResizeStart} className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#6366f1]/40 transition-colors z-10" />
       </div>
@@ -662,7 +563,7 @@ export function LeftSidebar() {
   }
 
   return (
-    <div className="flex-shrink-0 bg-[#161618] border-r border-[#2a2a2e] flex flex-col overflow-hidden relative" style={{ width: sidebarWidth }}>
+    <div className="flex-shrink-0 bg-[#161618] flex flex-col overflow-hidden relative" style={{ width: sidebarWidth }}>
       {/* Tabs */}
       <div className="flex border-b border-[#2a2a2e] flex-shrink-0">
         {([
