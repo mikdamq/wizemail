@@ -72,7 +72,10 @@ export function resolveFontFamily(
   brandKit: BrandKit
 ): string {
   if (!value || value === '$brand') {
-    return resolveFontFamily(brandKit.fontFamily, brandKit);
+    const kitFont = brandKit.fontFamily;
+    // Guard: if kit itself says '$brand' or is empty, fall back to system stack
+    if (!kitFont || kitFont === '$brand') return SYSTEM_FONT_STACK;
+    return resolveFontFamily(kitFont, brandKit);
   }
   if (value === 'system') return SYSTEM_FONT_STACK;
   return value;

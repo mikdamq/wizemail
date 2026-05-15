@@ -14,6 +14,14 @@ export function sectionsToRows(sections: SectionLike[]): EmailRow[] {
   }));
 }
 
+function buildFontLinks(brandKit?: BrandKit): string {
+  if (!brandKit?.customFonts?.length) return '';
+  return brandKit.customFonts
+    .filter((f) => f.type === 'google' && f.url)
+    .map((f) => `  <link rel="stylesheet" href="${f.url}">`)
+    .join('\n');
+}
+
 export function assembleEmailHTML(rows: EmailRow[], theme: ThemeMode = 'light', previewText?: string, variables?: Record<string, string>, brandKit?: BrandKit): string {
   const isDark = theme === 'dark';
   const bodyBg = isDark ? '#0f172a' : '#f1f5f9';
@@ -29,6 +37,8 @@ export function assembleEmailHTML(rows: EmailRow[], theme: ThemeMode = 'light', 
   const preheader = previewText
     ? `\n  <!-- Preheader -->\n  <div style="display:none;mso-hide:all;font-size:1px;color:${bodyBg};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${previewText}</div>`
     : '';
+
+  const fontLinks = buildFontLinks(brandKit);
 
   return `<!DOCTYPE html>
 <html${htmlDir} xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -46,7 +56,7 @@ export function assembleEmailHTML(rows: EmailRow[], theme: ThemeMode = 'light', 
     </xml>
   </noscript>
   <![endif]-->
-  <style type="text/css">
+${fontLinks ? fontLinks + '\n' : ''}  <style type="text/css">
     body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
@@ -93,13 +103,14 @@ export function assembleCleanHTML(rows: EmailRow[], theme: ThemeMode = 'light', 
   const htmlDir = rtl ? ' dir="rtl" lang="ar"' : ' lang="en"';
   const bodyDir = rtl ? ' dir="rtl"' : '';
   const rowsHTML = rows.map((r) => renderRow(r, isDark, brandKit)).join('\n');
+  const fontLinks = buildFontLinks(brandKit);
 
   return `<!DOCTYPE html>
 <html${htmlDir} xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style type="text/css">
+${fontLinks ? fontLinks + '\n' : ''}  <style type="text/css">
     body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
     table { border-collapse: collapse; }
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }

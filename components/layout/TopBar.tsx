@@ -47,23 +47,30 @@ export function TopBar() {
   }, [undo, redo]);
 
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSaveInFlight = useRef(false);
   useEffect(() => {
     if (!currentDesignId) return;
     if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
     autoSaveRef.current = setTimeout(async () => {
-      const saved = saveDesign({ name: currentDesignName, rows, emailDetails, theme, variables, brandKit }, currentDesignId);
-      const cloudSaved = await saveCloudDesign({
-        id: saved.id,
-        name: saved.name,
-        rows,
-        emailDetails,
-        theme,
-        variables,
-        brandKit,
-        version: currentDesignVersion ?? undefined,
-      });
-      if (cloudSaved) setCurrentDesign(cloudSaved.id, cloudSaved.name, cloudSaved.version);
-      markSaved();
+      if (autoSaveInFlight.current) return;
+      autoSaveInFlight.current = true;
+      try {
+        const saved = saveDesign({ name: currentDesignName, rows, emailDetails, theme, variables, brandKit }, currentDesignId);
+        const cloudSaved = await saveCloudDesign({
+          id: saved.id,
+          name: saved.name,
+          rows,
+          emailDetails,
+          theme,
+          variables,
+          brandKit,
+          version: currentDesignVersion ?? undefined,
+        });
+        if (cloudSaved) setCurrentDesign(cloudSaved.id, cloudSaved.name, cloudSaved.version);
+        markSaved();
+      } finally {
+        autoSaveInFlight.current = false;
+      }
     }, 3000);
     return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,6 +136,20 @@ export function TopBar() {
     const name = draftName.trim() || currentDesignName;
     setCurrentDesignName(name);
     setEditingName(false);
+    if (currentDesignId && name !== currentDesignName) {
+      saveCloudDesign({
+        id: currentDesignId,
+        name,
+        rows,
+        emailDetails,
+        theme,
+        variables,
+        brandKit,
+        version: currentDesignVersion ?? undefined,
+      }).then((cloudSaved) => {
+        if (cloudSaved) setCurrentDesign(cloudSaved.id, cloudSaved.name, cloudSaved.version);
+      });
+    }
   };
 
   const handleAddVariable = () => {
@@ -168,8 +189,15 @@ export function TopBar() {
   };
 
   const handleExportJSON = () => {
-    const sections = rows.map((r) => ({ type: r.columns[0]?.type ?? 'text', content: r.columns[0]?.content ?? {} }));
-    const json = JSON.stringify(sections, null, 2);
+    const sections = rows.map((r) => ({
+      columns: r.columns.map((col) => ({ type: col.type, content: col.content })),
+      columnGap: r.columnGap,
+      outerPaddingTop: r.outerPaddingTop,
+      outerPaddingBottom: r.outerPaddingBottom,
+      outerPaddingLeft: r.outerPaddingLeft,
+      outerPaddingRight: r.outerPaddingRight,
+    }));
+    const json = JSON.stringify({ rows: sections, emailDetails, variables }, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -188,6 +216,9 @@ export function TopBar() {
     setExportOpen(false);
     try {
       await downloadInlinedHTML(assembledHTML, 'email-inlined.html');
+      toast.success('Optimized HTML downloaded');
+    } catch (err) {
+      toast.error('Export failed — ' + (err instanceof Error ? err.message : 'unknown error'));
     } finally {
       setExporting(null);
     }

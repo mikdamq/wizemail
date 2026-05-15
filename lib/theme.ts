@@ -3,7 +3,9 @@ export const THEME_KEY = 'wizemail-theme';
 
 export function getTheme(): Theme {
   if (typeof window === 'undefined') return 'dark';
-  return (localStorage.getItem(THEME_KEY) as Theme) || 'dark';
+  const stored = localStorage.getItem(THEME_KEY) as Theme | null;
+  if (stored) return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 export function setTheme(theme: Theme): void {
@@ -12,4 +14,4 @@ export function setTheme(theme: Theme): void {
 }
 
 // Inline script string — injected before paint in layout to avoid flash
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){var t=localStorage.getItem('${THEME_KEY}')||'dark';document.documentElement.setAttribute('data-theme',t);})();`;
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){var s=localStorage.getItem('${THEME_KEY}');var t=s?s:(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();`;

@@ -651,6 +651,171 @@ function ControlsForType({ type, content, onUpdate }: { type: SectionType; conte
         </>
       )}
 
+      {type === 'stats' && (() => {
+        const statItems = content.statItems ?? [{ value: '0', label: 'Stat' }];
+        const addStat = () => onUpdate({ statItems: [...statItems, { value: '0', label: 'New stat' }] });
+        const removeStat = (i: number) => onUpdate({ statItems: statItems.filter((_, idx) => idx !== i) });
+        const updateStat = (i: number, key: 'value' | 'label', v: string) =>
+          onUpdate({ statItems: statItems.map((s, idx) => idx === i ? { ...s, [key]: v } : s) });
+        return (
+          <>
+            <CollapsibleGroup title="Stats" defaultOpen={true}>
+              <div className="space-y-2">
+                {statItems.map((stat, i) => (
+                  <div key={i} className="rounded-lg border border-[#2a2a2e] p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-[#71717a]">Stat {i + 1}</span>
+                      <button onClick={() => removeStat(i)} className="p-0.5 rounded text-[#3a3a3e] hover:text-red-400 transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <TextField label="Value" value={stat.value} onChange={(v) => updateStat(i, 'value', v)} placeholder="1,200" />
+                    <TextField label="Label" value={stat.label} onChange={(v) => updateStat(i, 'label', v)} placeholder="Subscribers" />
+                  </div>
+                ))}
+                <button onClick={addStat} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-dashed border-[#3a3a3e] text-[#71717a] hover:text-[#a1a1aa] hover:border-[#6366f1]/40 hover:bg-[#6366f1]/5 transition-all text-[10px]">
+                  <Plus className="w-3 h-3" /> Add stat
+                </button>
+              </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Colors">
+              <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+              <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+            </CollapsibleGroup>
+          </>
+        );
+      })()}
+
+      {type === 'team' && (() => {
+        const teamMembers = content.teamMembers ?? [{ name: 'Team Member', role: 'Role', imageUrl: '' }];
+        const addMember = () => onUpdate({ teamMembers: [...teamMembers, { name: 'New Member', role: 'Role', imageUrl: '' }] });
+        const removeMember = (i: number) => onUpdate({ teamMembers: teamMembers.filter((_, idx) => idx !== i) });
+        const updateMember = (i: number, key: 'name' | 'role' | 'imageUrl', v: string) =>
+          onUpdate({ teamMembers: teamMembers.map((m, idx) => idx === i ? { ...m, [key]: v } : m) });
+        return (
+          <>
+            <CollapsibleGroup title="Section headline">
+              <TextField label="Headline" value={content.headline} onChange={u('headline')} placeholder="Meet the team" aiButton={<AiBtn field="headline" updateKey="headline" />} />
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Members" defaultOpen={true}>
+              <div className="space-y-2">
+                {teamMembers.map((member, i) => (
+                  <div key={i} className="rounded-lg border border-[#2a2a2e] p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-[#71717a]">Member {i + 1}</span>
+                      <button onClick={() => removeMember(i)} className="p-0.5 rounded text-[#3a3a3e] hover:text-red-400 transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <TextField label="Name" value={member.name} onChange={(v) => updateMember(i, 'name', v)} />
+                    <TextField label="Role" value={member.role} onChange={(v) => updateMember(i, 'role', v)} />
+                    <TextField label="Image URL" value={member.imageUrl} onChange={(v) => updateMember(i, 'imageUrl', v)} placeholder="https://…" />
+                  </div>
+                ))}
+                <button onClick={addMember} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-dashed border-[#3a3a3e] text-[#71717a] hover:text-[#a1a1aa] hover:border-[#6366f1]/40 hover:bg-[#6366f1]/5 transition-all text-[10px]">
+                  <Plus className="w-3 h-3" /> Add member
+                </button>
+              </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Colors">
+              <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+              <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+            </CollapsibleGroup>
+          </>
+        );
+      })()}
+
+      {type === 'pricing' && (() => {
+        const plans = content.pricingPlans ?? [
+          { name: 'Free', price: '$0', period: '/mo', features: ['Feature one', 'Feature two'], buttonText: 'Get started', buttonUrl: '#', highlight: false },
+          { name: 'Pro', price: '$19', period: '/mo', features: ['Everything in Free', 'Feature three'], buttonText: 'Upgrade', buttonUrl: '#', highlight: true },
+        ];
+        const addPlan = () => onUpdate({ pricingPlans: [...plans, { name: 'New Plan', price: '$0', period: '/mo', features: ['Feature'], buttonText: 'Get started', buttonUrl: '#', highlight: false }] });
+        const removePlan = (i: number) => onUpdate({ pricingPlans: plans.filter((_, idx) => idx !== i) });
+        const updatePlan = (i: number, key: string, v: unknown) =>
+          onUpdate({ pricingPlans: plans.map((p, idx) => idx === i ? { ...p, [key]: v } : p) });
+        const updatePlanFeatures = (i: number, v: string) =>
+          onUpdate({ pricingPlans: plans.map((p, idx) => idx === i ? { ...p, features: v.split('\n') } : p) });
+        return (
+          <>
+            <CollapsibleGroup title="Plans" defaultOpen={true}>
+              <div className="space-y-2">
+                {plans.map((plan, i) => (
+                  <div key={i} className="rounded-lg border border-[#2a2a2e] p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-[#71717a]">Plan {i + 1}</span>
+                      <div className="flex items-center gap-1.5">
+                        <label className="flex items-center gap-1 text-[10px] text-[#71717a] cursor-pointer">
+                          <input type="checkbox" checked={!!plan.highlight} onChange={(e) => updatePlan(i, 'highlight', e.target.checked)} className="w-3 h-3 accent-[#6366f1]" />
+                          Featured
+                        </label>
+                        <button onClick={() => removePlan(i)} className="p-0.5 rounded text-[#3a3a3e] hover:text-red-400 transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <TextField label="Name" value={plan.name} onChange={(v) => updatePlan(i, 'name', v)} />
+                    <TextField label="Price" value={plan.price} onChange={(v) => updatePlan(i, 'price', v)} placeholder="$19" />
+                    <TextField label="Period" value={plan.period} onChange={(v) => updatePlan(i, 'period', v)} placeholder="/mo" />
+                    <TextField label="Button text" value={plan.buttonText} onChange={(v) => updatePlan(i, 'buttonText', v)} />
+                    <TextField label="Button URL" value={plan.buttonUrl} onChange={(v) => updatePlan(i, 'buttonUrl', v)} />
+                    <TextField label="Features (one per line)" value={plan.features.join('\n')} onChange={(v) => updatePlanFeatures(i, v)} multiline placeholder={"Feature one\nFeature two"} />
+                  </div>
+                ))}
+                <button onClick={addPlan} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-dashed border-[#3a3a3e] text-[#71717a] hover:text-[#a1a1aa] hover:border-[#6366f1]/40 hover:bg-[#6366f1]/5 transition-all text-[10px]">
+                  <Plus className="w-3 h-3" /> Add plan
+                </button>
+              </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Colors">
+              <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+              <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+            </CollapsibleGroup>
+          </>
+        );
+      })()}
+
+      {type === 'articles' && (() => {
+        const articles = content.articleItems ?? [{ title: 'Article Title', date: '', excerpt: '', imageUrl: '', url: '#' }];
+        const addArticle = () => onUpdate({ articleItems: [...articles, { title: 'New Article', date: '', excerpt: '', imageUrl: '', url: '#' }] });
+        const removeArticle = (i: number) => onUpdate({ articleItems: articles.filter((_, idx) => idx !== i) });
+        const updateArticle = (i: number, key: string, v: string) =>
+          onUpdate({ articleItems: articles.map((a, idx) => idx === i ? { ...a, [key]: v } : a) });
+        return (
+          <>
+            <CollapsibleGroup title="Section headline">
+              <TextField label="Headline" value={content.headline} onChange={u('headline')} placeholder="Latest articles" aiButton={<AiBtn field="headline" updateKey="headline" />} />
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Articles" defaultOpen={true}>
+              <div className="space-y-2">
+                {articles.map((article, i) => (
+                  <div key={i} className="rounded-lg border border-[#2a2a2e] p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-[#71717a]">Article {i + 1}</span>
+                      <button onClick={() => removeArticle(i)} className="p-0.5 rounded text-[#3a3a3e] hover:text-red-400 transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <TextField label="Title" value={article.title} onChange={(v) => updateArticle(i, 'title', v)} aiButton={<AiBtn field="headline" updateKey="headline" />} />
+                    <TextField label="Date" value={article.date} onChange={(v) => updateArticle(i, 'date', v)} placeholder="May 15, 2026" />
+                    <TextField label="Excerpt" value={article.excerpt} onChange={(v) => updateArticle(i, 'excerpt', v)} multiline aiButton={<AiBtn field="body" updateKey="bodyText" />} />
+                    <TextField label="Image URL" value={article.imageUrl} onChange={(v) => updateArticle(i, 'imageUrl', v)} placeholder="https://…" />
+                    <TextField label="Link URL" value={article.url} onChange={(v) => updateArticle(i, 'url', v)} placeholder="https://…" />
+                  </div>
+                ))}
+                <button onClick={addArticle} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-dashed border-[#3a3a3e] text-[#71717a] hover:text-[#a1a1aa] hover:border-[#6366f1]/40 hover:bg-[#6366f1]/5 transition-all text-[10px]">
+                  <Plus className="w-3 h-3" /> Add article
+                </button>
+              </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Colors">
+              <ColorField label="Background" value={content.backgroundColor} onChange={u('backgroundColor')} />
+              <ColorField label="Text color" value={content.textColor} onChange={u('textColor')} />
+            </CollapsibleGroup>
+          </>
+        );
+      })()}
+
       {type === 'divider' && (
         <CollapsibleGroup title="Colors" defaultOpen={true}>
           <ColorField label="Divider color" value={content.dividerColor} onChange={u('dividerColor')} />
