@@ -2,9 +2,4 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/chefxmkt/wizemail.mikdam.com
-    - /bin/cp -R . $DEPLOYPATH
-    - cd $DEPLOYPATH
-    - npm ci
-    - npm run build
-    - /bin/cp -R public $DEPLOYPATH/.next/standalone/public
-    - /bin/cp -R .next/static $DEPLOYPATH/.next/standalone/.next/static
+    - cd $DEPLOYPATH && touch tmp/restart.txt
