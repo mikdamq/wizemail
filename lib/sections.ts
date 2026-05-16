@@ -326,7 +326,17 @@ function sectionPad(content: SectionContent, defaultPy: number, defaultPx: numbe
   const r = content.sectionPaddingRight ?? defaultPx;
   const b = content.sectionPaddingBottom ?? defaultPy;
   const l = content.sectionPaddingLeft ?? defaultPx;
-  return padCss(t, r, b, l, rtl);
+  let css = padCss(t, r, b, l, rtl);
+  const mt = content.sectionMarginTop ?? 0;
+  const mr = content.sectionMarginRight ?? 0;
+  const mb = content.sectionMarginBottom ?? 0;
+  const ml = content.sectionMarginLeft ?? 0;
+  if (mt || mr || mb || ml) {
+    css += rtl
+      ? `margin:${mt}px ${ml}px ${mb}px ${mr}px;`
+      : `margin:${mt}px ${mr}px ${mb}px ${ml}px;`;
+  }
+  return css;
 }
 
 function physicalAlign(a: 'left' | 'center' | 'right', rtl: boolean): 'left' | 'center' | 'right' {
@@ -1052,18 +1062,29 @@ export function renderRow(row: EmailRow, isDark: boolean, brandKit?: BrandKit): 
   const rtl = kit.direction === 'rtl';
   const dirAttr = rtl ? ' dir="rtl"' : '';
 
+  const rowMarginStyle = (() => {
+    const mt = row.outerMarginTop ?? 0;
+    const mr = row.outerMarginRight ?? 0;
+    const mb = row.outerMarginBottom ?? 0;
+    const ml = row.outerMarginLeft ?? 0;
+    if (!mt && !mr && !mb && !ml) return '';
+    return rtl
+      ? `margin:${mt}px ${ml}px ${mb}px ${mr}px;`
+      : `margin:${mt}px ${mr}px ${mb}px ${ml}px;`;
+  })();
+
   if (row.columns.length === 1) {
     const col = row.columns[0];
     const hasOuterPad = row.outerPaddingX !== undefined || row.outerPaddingY !== undefined ||
       row.outerPaddingTop !== undefined || row.outerPaddingRight !== undefined ||
       row.outerPaddingBottom !== undefined || row.outerPaddingLeft !== undefined;
-    if (hasOuterPad) {
+    if (hasOuterPad || rowMarginStyle) {
       const pt = row.outerPaddingTop ?? row.outerPaddingY ?? 0;
       const pr = row.outerPaddingRight ?? row.outerPaddingX ?? 0;
       const pb = row.outerPaddingBottom ?? row.outerPaddingY ?? 0;
       const pl = row.outerPaddingLeft ?? row.outerPaddingX ?? 0;
       return `
-<table data-row-id="${row.id}" role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0">
+<table data-row-id="${row.id}" role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0" style="${rowMarginStyle}">
   <tr>
     <td style="${padCss(pt, pr, pb, pl, rtl)}">
       ${renderSection(col.type, col.content, isDark, brandKit)}
@@ -1099,13 +1120,13 @@ export function renderRow(row: EmailRow, isDark: boolean, brandKit?: BrandKit): 
     const colPad = hasColPad
       ? padCss(col.paddingTop ?? 0, col.paddingRight ?? 0, col.paddingBottom ?? 0, col.paddingLeft ?? 0, rtl)
       : '';
-    return `          <td class="email-col" width="${colWidths[i]}" valign="top" style="${colGapPad}${colPad}background-color:${bg};">
+    return `          <td class="email-col" data-col-idx="${i}" width="${colWidths[i]}" valign="top" style="${colGapPad}${colPad}background-color:${bg};">
             ${renderColumnContent(col.type, col.content, isDark, brandKit)}
           </td>`;
   }).join('\n');
 
   return `
-<table data-row-id="${row.id}" role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0">
+<table data-row-id="${row.id}" role="presentation"${dirAttr} width="100%" cellpadding="0" cellspacing="0" border="0" style="${rowMarginStyle}">
   <tr>
     <td align="center" style="${padCss(outerPt, outerPr, outerPb, outerPl, rtl)}">
       <table role="presentation" width="${totalWidth}" cellpadding="0" cellspacing="0" border="0" style="max-width:${totalWidth}px;width:100%;">

@@ -55,7 +55,7 @@ async function MaintenanceBanner() {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} ${fraunces.variable} h-full`}>
-      <body className="h-full overflow-hidden">
+      <body className="h-full">
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <MaintenanceBanner />
         {children}

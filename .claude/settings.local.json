@@ -20,10 +20,16 @@
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\mikda\\\\Downloads\\\\Landing Pages\\\\HTML Email Design\\\\wizemail\\\\components\\\\builder\" -Recurse -Filter \"*.tsx\")",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(xargs grep -l \"featureFlags\\\\|aiGeneration\")",
-      "Bash(node -e \"require\\('mjml'\\); console.log\\('mjml ok'\\)\")"
+      "Bash(node -e \"require\\('mjml'\\); console.log\\('mjml ok'\\)\")",
+      "Bash(grep -E \"\\\\.\\(json|yml|yaml|js|toml|sh\\)$|^d\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\mikda\\\\Downloads\\\\Landing Pages\\\\HTML Email Design\\\\wizemail\" -Recurse -Directory)",
+      "Bash(Select-Object -First 20 FullName)",
+      "Bash(xargs ls -la)",
+      "Bash(mkdir -p \"c:\\\\Users\\\\mikda\\\\Downloads\\\\Landing Pages\\\\HTML Email Design\\\\wizemail\\\\app\\\\preview\\\\[token]\")"
     ],
     "additionalDirectories": [
-      "c:\\Users\\mikda\\Downloads\\Landing Pages\\HTML Email Design\\wizemail\\app\\brand-kits"
+      "c:\\Users\\mikda\\Downloads\\Landing Pages\\HTML Email Design\\wizemail\\app\\brand-kits",
+      "c:\\Users\\mikda\\Downloads\\Landing Pages\\HTML Email Design\\wizemail\\app\\preview"
     ]
   }
 }

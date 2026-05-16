@@ -58,7 +58,7 @@ interface EmailStore {
   removeRow: (rowId: string) => void;
   duplicateRow: (rowId: string) => void;
   reorderRows: (oldIndex: number, newIndex: number) => void;
-  updateRowSpacing: (rowId: string, spacing: Partial<Pick<EmailRow, 'columnGap' | 'outerPaddingX' | 'outerPaddingY' | 'outerPaddingTop' | 'outerPaddingRight' | 'outerPaddingBottom' | 'outerPaddingLeft'>>) => void;
+  updateRowSpacing: (rowId: string, spacing: Partial<Pick<EmailRow, 'columnGap' | 'outerPaddingX' | 'outerPaddingY' | 'outerPaddingTop' | 'outerPaddingRight' | 'outerPaddingBottom' | 'outerPaddingLeft' | 'outerMarginTop' | 'outerMarginRight' | 'outerMarginBottom' | 'outerMarginLeft'>>) => void;
   insertSectionTemplate: (template: SectionTemplate, afterRowId?: string) => void;
 
   // Column actions

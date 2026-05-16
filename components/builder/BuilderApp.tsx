@@ -16,7 +16,7 @@ export function BuilderApp() {
   const [rightOpen, setRightOpen] = useState(true);
 
   return (
-    <div className="flex flex-col h-full bg-[#0f0f11] overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-[#0f0f11] overflow-hidden">
       <TopBar />
 
       <div className="flex flex-1 overflow-hidden min-h-0">

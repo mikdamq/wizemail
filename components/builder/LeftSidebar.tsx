@@ -256,10 +256,25 @@ const LAYOUT_PRESETS: Array<{ label: string; widths: number[] }> = [
   { label: '¼ ¾', widths: [0.25, 0.75] },
 ];
 
-function LayoutPicker({ rowId, onClose }: { rowId: string; onClose: () => void }) {
+function LayoutPicker({ rowId, onClose, anchorRef }: { rowId: string; onClose: () => void; anchorRef: React.RefObject<HTMLButtonElement | null> }) {
   const { setRowLayout } = useEmailStore();
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    const el = anchorRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setPos({ top: r.bottom + 4, left: r.left });
+  }, [anchorRef]);
+
+  if (!pos) return null;
+
   return (
-    <div className="absolute bottom-full left-0 mb-1 z-50 bg-[#18181b] border border-[#2a2a2e] rounded-lg shadow-xl p-2 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed z-[200] bg-[#18181b] border border-[#2a2a2e] rounded-lg shadow-xl p-2 min-w-[160px]"
+      style={{ top: pos.top, left: pos.left }}
+      onClick={(e) => e.stopPropagation()}
+    >
       <p className="text-[9px] font-semibold text-[#52525b] uppercase tracking-wider px-1 pb-1.5">Column layout</p>
       <div className="space-y-0.5">
         {LAYOUT_PRESETS.map((preset) => (
@@ -425,7 +440,7 @@ function SortableRowItem({
         {/* Row actions */}
         <div ref={layoutContainerRef} className="relative flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
           {showLayoutPicker && (
-            <LayoutPicker rowId={row.id} onClose={() => setShowLayoutPicker(false)} />
+            <LayoutPicker rowId={row.id} onClose={() => setShowLayoutPicker(false)} anchorRef={layoutBtnRef} />
           )}
           <button
             ref={layoutBtnRef}

@@ -84,56 +84,74 @@ export function PreviewCanvas() {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Attach iframe interaction listeners after HTML is injected
-  const attachListeners = useCallback(() => {
-    const frame = iframeRef.current;
-    if (!frame) return;
-    const doc = frame.contentDocument;
-    if (!doc) return;
+  // Always-current refs — handlers read these so listeners never go stale
+  const getOverlayRectRef = useRef(getOverlayRect);
+  const clearSelectionRef = useRef(clearSelection);
+  const selectColumnRef = useRef(selectColumn);
+  useEffect(() => { getOverlayRectRef.current = getOverlayRect; });
+  useEffect(() => { clearSelectionRef.current = clearSelection; });
+  useEffect(() => { selectColumnRef.current = selectColumn; });
 
-    const getRowEl = (target: EventTarget | null): Element | null => {
-      if (!(target instanceof Element)) return null;
-      return target.closest('[data-row-id]');
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      const rowEl = getRowEl(e.target);
-      if (!rowEl) { setHovered(null); return; }
-      setHovered(getOverlayRect(rowEl));
-    };
-
-    const onMouseLeave = () => setHovered(null);
-
-    const onClick = (e: MouseEvent) => {
-      e.stopPropagation();
-      const rowEl = getRowEl(e.target);
-      if (!rowEl) { setSelected(null); clearSelection(); return; }
-      const overlay = getOverlayRect(rowEl);
-      setSelected(overlay);
-      if (overlay) selectColumn(overlay.rowId, 0);
-    };
-
-    doc.addEventListener('mousemove', onMouseMove);
-    doc.addEventListener('mouseleave', onMouseLeave);
-    doc.addEventListener('click', onClick);
-
-    return () => {
-      doc.removeEventListener('mousemove', onMouseMove);
-      doc.removeEventListener('mouseleave', onMouseLeave);
-      doc.removeEventListener('click', onClick);
-    };
-  }, [getOverlayRect, clearSelection, selectColumn]);
+  const listenerCleanupRef = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       injectHTML();
-      // Wait a tick for the iframe to render before attaching
+
+      // doc.open/write/close replaces the iframe document entirely.
+      // We must grab contentDocument AFTER the write, in a fresh rAF,
+      // so we're attaching to the new document — not the now-dead one.
       requestAnimationFrame(() => {
-        // Re-read stored selection if any
+        // Tear down listeners on the old document (already dead, but clean up refs)
+        listenerCleanupRef.current?.();
+        listenerCleanupRef.current = undefined;
+
         setSelected(null);
         setHovered(null);
-        attachListeners();
+
+        const frame = iframeRef.current;
+        const doc = frame?.contentDocument;
+        if (!frame || !doc) return;
+
+        const getRowEl = (target: EventTarget | null): Element | null => {
+          if (!(target instanceof Element)) return null;
+          return target.closest('[data-row-id]');
+        };
+
+        const getColIdx = (target: EventTarget | null): number => {
+          if (!(target instanceof Element)) return 0;
+          const colEl = target.closest('[data-col-idx]');
+          if (!colEl) return 0;
+          return parseInt(colEl.getAttribute('data-col-idx') ?? '0', 10);
+        };
+
+        const onMouseMove = (e: MouseEvent) => {
+          const rowEl = getRowEl(e.target);
+          if (!rowEl) { setHovered(null); return; }
+          setHovered(getOverlayRectRef.current(rowEl));
+        };
+
+        const onMouseLeave = () => setHovered(null);
+
+        const onClick = (e: MouseEvent) => {
+          e.stopPropagation();
+          const rowEl = getRowEl(e.target);
+          if (!rowEl) { setSelected(null); clearSelectionRef.current(); return; }
+          const overlay = getOverlayRectRef.current(rowEl);
+          setSelected(overlay);
+          if (overlay) selectColumnRef.current(overlay.rowId, getColIdx(e.target));
+        };
+
+        doc.addEventListener('mousemove', onMouseMove);
+        doc.addEventListener('mouseleave', onMouseLeave);
+        doc.addEventListener('click', onClick);
+
+        listenerCleanupRef.current = () => {
+          doc.removeEventListener('mousemove', onMouseMove);
+          doc.removeEventListener('mouseleave', onMouseLeave);
+          doc.removeEventListener('click', onClick);
+        };
       });
     }, 150);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };

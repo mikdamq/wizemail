@@ -130,6 +130,12 @@ export interface SectionContent {
   sectionPaddingLeft?: number;
   sectionPaddingRight?: number;
 
+  // Section-level margin overrides
+  sectionMarginTop?: number;
+  sectionMarginBottom?: number;
+  sectionMarginLeft?: number;
+  sectionMarginRight?: number;
+
   // Typography overrides (applied to headline and body text)
   headlineFontSize?: number;
   headlineFontWeight?: number;
@@ -186,6 +192,10 @@ export interface EmailRow {
   outerPaddingRight?: number;
   outerPaddingBottom?: number;
   outerPaddingLeft?: number;
+  outerMarginTop?: number;
+  outerMarginRight?: number;
+  outerMarginBottom?: number;
+  outerMarginLeft?: number;
 }
 
 export interface EmailDetails {
